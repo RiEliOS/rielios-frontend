@@ -199,9 +199,9 @@ rielios-frontend/
     cd rielios-frontend
     ```
 3. **Install dependencies:**
-    ```bash
-    npm install
-    ```
+  ```bash
+  pnpm install
+  ```
 
 ---
 
@@ -223,7 +223,7 @@ VITE_API_URL=https://api.os.rielitech.com
 ## ▶️ Run Locally
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 Visit: [http://localhost:5173](http://localhost:5173) by default
 
@@ -233,12 +233,12 @@ Visit: [http://localhost:5173](http://localhost:5173) by default
 
 **Build:**
 ```bash
-npm run build
+pnpm run build
 ```
 
 **Preview:**
 ```bash
-npm run preview
+pnpm run preview
 ```
 
 ---
