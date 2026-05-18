@@ -1,4 +1,4 @@
-# 🚀 RiEliOS Frontend
+# RiEliOS Frontend
 
 <div align="center">
 
@@ -10,11 +10,9 @@
 
 A modern web-based platform for managing **finance, goals, savings, investments, life areas, budgeting, and personal growth** — all in one intelligent dashboard.
 
-Built with **React, Vite, TypeScript, Tailwind CSS, Zustand, and modern frontend architecture**.
-
 ![React](https://img.shields.io/badge/React-19-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
-![Vite](https://img.shields.io/badge/Vite-Frontend-purple)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
+![Vite](https://img.shields.io/badge/Vite-6-purple)
 ![Tailwind](https://img.shields.io/badge/TailwindCSS-4-cyan)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -22,107 +20,260 @@ Built with **React, Vite, TypeScript, Tailwind CSS, Zustand, and modern frontend
 
 ---
 
-## 📌 Overview
+## Overview
 
-RiEliOS Frontend is the client-side application for **RiEliOS**, a modern **Personal Life Operating System** developed under the **RiEliTech** ecosystem.
+RiEliOS Frontend is the client-side application for **RiEliOS**, a **Personal Life Operating System** developed under the **RiEliTech** ecosystem.
 
-RiEliOS helps users organize important areas of life from one centralized platform — instead of using multiple disconnected tools.
-
-**Key benefits:**
-- Financial growth & personal discipline
-- Goal achievement & tracking
-- Centralized life and data organization
-- Productivity & progress insights
+Instead of juggling multiple disconnected apps, RiEliOS gives you one centralized platform to track money, set and achieve goals, monitor investments, and organize your life.
 
 ---
 
-## 🎯 Vision
+## Vision
 
 > **Organize life, manage money, build discipline, and achieve goals — all from one platform.**
 
-RiEliOS aspires to be the most complete digital operating system for personal life management.
+---
+
+## Tech Stack
+
+### Core
+| Package | Version | Purpose |
+|---------|---------|---------|
+| React | 19 | UI framework |
+| Vite | 6 | Build tool & dev server |
+| TypeScript | 5.8 | Type safety |
+| Tailwind CSS | 4 | Utility-first styling |
+
+### UI & Components
+| Package | Purpose |
+|---------|---------|
+| Radix UI (accordion, avatar, checkbox, dialog, dropdown-menu, label, popover, progress, radio-group, scroll-area, select, separator, slot, switch, tabs, toast, tooltip) | Headless UI primitives |
+| Lucide React | Icon library |
+| Framer Motion | Animations |
+| class-variance-authority | Component variant management |
+| clsx + tailwind-merge | Class merging utilities |
+
+### State & Data
+| Package | Purpose |
+|---------|---------|
+| Zustand 5 | Global auth state |
+| TanStack Query 5 | Server state, caching & mutations |
+| Axios | HTTP client |
+
+### Forms & Validation
+| Package | Purpose |
+|---------|---------|
+| React Hook Form 7 | Form state management |
+| @hookform/resolvers | Zod adapter for RHF |
+| Zod | Schema validation |
+
+### Routing & Notifications
+| Package | Purpose |
+|---------|---------|
+| React Router DOM 6 | Client-side routing |
+| Sonner 2 | Toast notifications |
 
 ---
 
-## ✨ Core Features
+## Project Structure
 
-### 🔐 Authentication
-- Secure registration & login
-- Password reset
-- JWT authentication & session persistence
-- Protected routes
-
-### 💰 Finance Management
-- Track income and expenses
-- Manage bill payments and categories
-- Financial reports & spending overview
-
-### 📊 Monthly Budgeting
-- Set, track, and compare planned vs. actual budgets
-- Category-based budgeting & monthly reports
-
-### 💵 Savings Goals
-- Create savings targets (e.g., emergency fund, travel fund)
-- Track progress, deadlines, and goal completion
-
-### 🎯 Personal Goals
-- Set career, educational, health, or financial goals
-- Monitor priorities, deadlines, milestones, and progress
-
-### 📈 Investment Management
-- Monitor investments (timber, agriculture, business, etc.)
-- Plan budgets, track returns, document notes
-
-### 🌱 Life Areas
-- Organize your life: career, health, education, relationships, and more
-
-### 📁 Documents Vault
-- Securely store receipts, contracts, academic documents, financial records, and notes
-
-### 📊 Reports & Analytics
-- Visualize your progress: finance, savings, goals, investments, and monthly summaries
-
----
-
-## 🛠 Tech Stack
-
-**Frontend:**  
-- React 19
-- Vite
-- TypeScript
-
-**UI & Styling:**  
-- Tailwind CSS
-- ShadCN UI
-- Framer Motion
-- Lucide Icons
-
-**State Management:**  
-- Zustand
-
-**API:**  
-- Axios
-
-**Data Fetching:**  
-- TanStack Query
-
-**Form Handling:**  
-- React Hook Form
-- Zod Validation
-
-**Routing:**  
-- React Router DOM
+```
+rielios-frontend/
+│
+├── public/
+│   ├── logo.png
+│   └── favicon.ico
+│
+├── src/
+│   ├── components/
+│   │   ├── layout/
+│   │   │   ├── Sidebar.tsx          # Navigation sidebar
+│   │   │   ├── Layout.tsx           # App shell wrapper
+│   │   │   └── ProtectedRoute.tsx   # Auth guard
+│   │   └── ui/                      # shadcn/Radix UI components
+│   │       ├── button.tsx
+│   │       ├── input.tsx
+│   │       ├── label.tsx
+│   │       ├── textarea.tsx
+│   │       ├── dialog.tsx
+│   │       ├── select.tsx
+│   │       ├── tabs.tsx
+│   │       ├── progress.tsx
+│   │       ├── empty-state.tsx      # Shared empty state component
+│   │       └── confirm-dialog.tsx   # Shared delete confirmation dialog
+│   │
+│   ├── pages/
+│   │   ├── auth/                    # Login, Register, Forgot/Reset password
+│   │   ├── dashboard/               # DashboardPage — KPIs, panels, quick-add
+│   │   ├── finance/
+│   │   │   ├── FinancePage.tsx      # Tabs shell
+│   │   │   └── components/
+│   │   │       ├── IncomeTab.tsx
+│   │   │       ├── ExpensesTab.tsx
+│   │   │       ├── BudgetsTab.tsx
+│   │   │       └── CategoriesTab.tsx
+│   │   ├── savings/                 # SavingsPage
+│   │   ├── goals/                   # GoalsPage
+│   │   ├── investments/             # InvestmentsPage + entries panel
+│   │   ├── life-areas/              # LifeAreasPage
+│   │   ├── reports/                 # ReportsPage — analytics panels
+│   │   ├── settings/                # SettingsPage — profile & preferences
+│   │   └── landing/                 # About/landing pages
+│   │
+│   ├── services/
+│   │   ├── api.ts                   # Axios instance
+│   │   └── finance.service.ts       # Finance API helpers
+│   │
+│   ├── store/
+│   │   └── auth.store.ts            # Zustand auth store
+│   │
+│   ├── types/
+│   │   └── finance.ts               # Shared TypeScript types
+│   │
+│   ├── lib/
+│   │   └── utils.ts                 # cn() helper
+│   │
+│   ├── App.tsx
+│   └── main.tsx
+│
+├── package.json
+├── vite.config.ts
+└── tsconfig.json
+```
 
 ---
 
-## 🏗 System Architecture
+## Pages & Routes
 
-```txt
+| Route | Page | Description |
+|-------|------|-------------|
+| `/login` | LoginPage | Email + password login |
+| `/register` | RegisterPage | New account creation |
+| `/forgot-password` | ForgotPasswordPage | Request password reset email |
+| `/reset-password` | ResetPasswordPage | Set new password via token |
+| `/dashboard` | DashboardPage | KPI overview, panels, recent transactions, quick add |
+| `/finance` | FinancePage | Tabbed: Income · Expenses · Budgets · Categories |
+| `/savings` | SavingsPage | Savings goals with progress tracking |
+| `/goals` | GoalsPage | Personal goals with linked savings & investments |
+| `/investments` | InvestmentsPage | Investment tracking with entries log |
+| `/life-areas` | LifeAreasPage | Life area organization |
+| `/reports` | ReportsPage | Finance, goals, investments & budget analytics |
+| `/settings` | SettingsPage | Profile, preferences & account management |
+
+---
+
+## Core Features
+
+### Authentication ✅
+- Registration, login, forgot password, password reset
+- JWT token storage and session persistence
+- Protected routes with auth guard
+
+### Dashboard ✅
+- KPI cards: Net Flow, Income, Expenses, Available Cash (current month)
+- Savings Goals panel with overall + per-goal progress bars
+- Investments panel: budget vs contributed vs returned
+- Personal Goals panel with priority badges and progress
+- Budget Health panel with per-category spend bars (red if over)
+- Recent Transactions list (income + expenses, chronological)
+- **Quick Add** buttons — add income or expense directly from the dashboard without navigating away
+
+### Finance — Income ✅
+- Log income entries: source name, amount, date, optional category & note
+- Month filter (native date picker) + text search
+- Period total badge ("This Period" / "All Time")
+- Human-readable date formatting (e.g. "May 19, 2026")
+- Edit and delete with confirmation dialog
+
+### Finance — Expenses ✅
+- Log expenses: description, amount, date, optional category, payment method & note
+- Month filter + text search
+- Period total badge
+- Budget hint — shows remaining budget for the selected category when adding
+- Human-readable date formatting
+- Edit and delete with confirmation dialog
+
+### Finance — Budgets ✅
+- Set monthly spending limits per expense category
+- Real-time progress bars with color coding (green → amber at 80% → red when over)
+- Over-budget alert banner with total overage and affected categories
+- "All budgets on track" green banner when all are within limits
+- Edit and delete with confirmation dialog
+
+### Finance — Categories ✅
+- Create income, expense, saving, or investment categories
+- Custom color with color picker
+- Type badges with distinct color coding
+- Edit and delete with confirmation dialog
+
+### Savings Goals ✅
+- Create savings goals with name, target amount, saved amount, deadline, status
+- Link to a Personal Goal
+- Progress bar per goal, total saved vs total target summary stats
+- Status: active, completed, paused, cancelled
+- Edit and delete with confirmation dialog
+
+### Personal Goals ✅
+- Create goals with title, description, priority (low/medium/high), target date, life area
+- Status management: active, completed, paused, cancelled
+- Priority and status badges with color coding
+- Linked savings goals shown as embedded progress bars
+- Linked investments summary
+- Target date display
+- Edit and delete with confirmation dialog
+
+### Investments ✅
+- Track investments with planned budget, expected return
+- Link to Personal Goal and Life Area
+- Budget usage progress bar (red if over budget)
+- Contributed vs Returned metrics with color-coded comparison
+- **Entries panel** — log contributions, returns, and notes with a timestamped history
+- Show/hide history toggle with summary stats (contributed total, returned total, net P&L)
+- Edit and delete with confirmation dialog
+
+### Life Areas ✅
+- Define life pillars (Health, Career, Finance, etc.) with emoji picker and description
+- Used as a linking dimension across Goals and Investments
+- Edit and delete with confirmation dialog
+
+### Reports ✅
+- Finance summary: all-time income, expenses, invested, net balance, available cash
+- Top expense categories with relative progress bars
+- Goals summary: total count, breakdown by status
+- Investments summary: budget usage, contributed vs returned, expected vs actual P&L, performance labels
+- Budget performance: planned vs spent per category across all periods, variance totals
+
+### Settings ✅
+- Profile: full name, phone, avatar URL
+- Preferences: currency, timezone, theme
+- Account: change password
+
+---
+
+## Shared UI Patterns
+
+### `EmptyState` component
+Reusable empty state with icon, title, description, and optional call-to-action button. Used across all list pages.
+
+### `ConfirmDialog` component
+Reusable delete confirmation dialog. Applied consistently across all pages — no destructive action fires immediately on click.
+
+### Design system conventions
+- Cards: `bg-white rounded-2xl border border-zinc-200`
+- All mutations show `toast.success` / `toast.error` feedback via Sonner
+- Loading states use skeleton pulse animations
+- Mobile-responsive tab overflow via `overflow-x-auto` on Finance tabs
+
+---
+
+## System Architecture
+
+```
 User
  ↓
-React Frontend
+React Frontend (Vite, React 19)
  ↓
-Axios API Layer
+Axios API Layer (services/api.ts)
  ↓
 NestJS Backend API
  ↓
@@ -133,224 +284,117 @@ Supabase PostgreSQL
 
 ---
 
-## 📂 Project Structure
+## Installation
 
-```txt
-rielios-frontend/
-│
-├── public/
-│   ├── logo.png
-│   ├── favicon.ico
-│
-├── src/
-│   ├── assets/
-│   ├── components/
-│   │   ├── layout/
-│   │   └── ui/
-│   ├── pages/
-│   │   ├── auth/
-│   │   ├── dashboard/
-│   │   ├── finance/
-│   │   ├── goals/
-│   │   ├── investments/
-│   │   ├── life-areas/
-│   │   ├── reports/
-│   │   └── settings/
-│   ├── services/
-│   ├── store/
-│   ├── hooks/
-│   ├── utils/
-│   ├── types/
-│   ├── App.tsx
-│   └── main.tsx
-├── package.json
-├── vite.config.ts
-└── tsconfig.json
+```bash
+git clone https://github.com/RiEliOS/rielios-frontend.git
+cd rielios-frontend
+pnpm install
 ```
 
 ---
 
-## 🗺 Main Pages & Routes
+## Environment Variables
 
-- **Authentication**
-  - `/login`
-  - `/register`
-  - `/forgot-password`
-  - `/reset-password`
-- **Dashboard**
-  - `/dashboard`
-- **Finance**
-  - `/finance`, `/finance/income`, `/finance/expenses`, `/finance/budgets`, `/finance/categories`, `/finance/savings`, `/finance/bills`
-- **Goals:** `/goals`, `/goals/:id`
-- **Investments:** `/investments`, `/investments/:id`
-- **Life Areas:** `/life-areas`, `/life-areas/:id`
-- **Reports:** `/reports`
-
----
-
-## ⚙️ Installation
-
-1. **Clone the repository:**
-    ```bash
-    git clone https://github.com/RiEliOS/rielios-frontend.git
-    ```
-2. **Navigate to project:**
-    ```bash
-    cd rielios-frontend
-    ```
-3. **Install dependencies:**
-  ```bash
-  pnpm install
-  ```
-
----
-
-## 🔐 Environment Variables
-
-Create a `.env` file with your API base URL:
-
-**Example for local development:**
 ```env
+# Local
 VITE_API_URL=http://localhost:3000
-```
-**For production:**
-```env
+
+# Production
 VITE_API_URL=https://api.os.rielitech.com
 ```
 
 ---
 
-## ▶️ Run Locally
+## Run Locally
 
 ```bash
-pnpm run dev
+pnpm dev
 ```
-Visit: [http://localhost:5173](http://localhost:5173) by default
+
+Visit: [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## 🏗 Build & Preview
+## Build & Preview
 
-**Build:**
 ```bash
-pnpm run build
-```
-
-**Preview:**
-```bash
-pnpm run preview
+pnpm build
+pnpm preview
 ```
 
 ---
 
-## 🔌 API Integration
+## Deployment
 
-All requests go through:
-```
-src/services/api.ts
-```
+Frontend is deployed on **Vercel**.
 
-**Example:**
-```typescript
-import axios from "axios";
+**Production:** [https://os.rielitech.com](https://os.rielitech.com)
 
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-});
-```
+Cloudflare DNS:
+| Type | Name | Target |
+|------|------|--------|
+| CNAME | os | Vercel Target |
 
 ---
 
-## 🔒 Authentication Flow
+## Git Workflow
 
-```txt
-Register
-   ↓
-Login
-   ↓
-JWT Token
-   ↓
-Store Authentication State
-   ↓
-Protected Routes
-```
+| Branch | Purpose |
+|--------|---------|
+| `main` | Production |
+| `develop` | Development |
+| `feature/*` | New features |
+| `fix/*` | Bug fixes |
 
 ---
 
-## 🌍 Deployment
+## Roadmap
 
-Frontend is deployed with **Vercel**.
+### Phase 1 — Authentication ✅ Complete
+- Register, login, forgot password, JWT auth, protected routes
 
-**Production:**  
-[https://os.rielitech.com](https://os.rielitech.com)
+### Phase 2 — Finance ✅ Complete
+- Income, expenses, budgets, categories
+- Month filtering, search, period totals, budget hints
 
-**Production Env Variable:**
-```env
-VITE_API_URL=https://api.os.rielitech.com
-```
+### Phase 3 — Savings ✅ Complete
+- Savings goals with progress tracking, deadlines, status, linked personal goals
 
----
+### Phase 4 — Goals ✅ Complete
+- Personal goals with priority, status, linked savings and investments, life area linking
 
-## 🌐 DNS Configuration
+### Phase 5 — Investments ✅ Complete
+- Investment tracking, budget vs contributed vs returned, entries log with P&L
 
-Cloudflare DNS example:
-| Type  | Name | Target         |
-|-------|------|----------------|
-| CNAME | os   | Vercel Target  |
+### Phase 6 — Life Areas ✅ Complete
+- Life area definition with emoji picker, linked to goals and investments
 
----
+### Phase 7 — Reports ✅ Complete
+- Finance, goals, investments, and budget analytics panels
 
-## 🌿 Git Workflow
+### Phase 8 — Dashboard & UX Polish ✅ Complete
+- Real-time KPI cards, linked panels, recent transactions
+- Quick Add income/expense from dashboard
+- Delete confirmation dialogs across all pages
+- Human-readable date formatting everywhere
+- Toast notifications on all create/update/delete actions
+- EmptyState and ConfirmDialog shared components
+- Mobile-responsive finance tab overflow
 
-- `main` → Production
-- `develop` → Development
-- `feature/*` → New features
-- `fix/*` → Bug fixes
+### Phase 9 — Documents 📋 Planned
+- Upload and manage receipts, contracts, and financial records
 
-**Example branch names:**
-- `feature/auth`
-- `feature/dashboard`
-- `feature/finance-module`
-- `fix/login-validation`
-
----
-
-## 🗺 Roadmap
-
-**Phase 1** — Authentication  
-- Register, Login, Forgot password, JWT auth
-
-**Phase 2** — Finance  
-- Income, Expenses, Categories, Budgets, Bills
-
-**Phase 3** — Savings  
-- Savings goals, Progress tracking
-
-**Phase 4** — Goals  
-- Personal goals, Milestones, Progress tracking
-
-**Phase 5** — Investments  
-- Investments, Expenses, Returns
-
-**Phase 6** — Documents  
-- Upload, Storage, Categorization
-
-**Phase 7** — Reports  
-- Analytics, Charts, Monthly summaries
+### Phase 10 — Advanced Analytics 📋 Planned
+- Income/expense trend charts (bar, line)
+- Category filter on income/expense lists
+- Savings contribution shortcut
+- Goal progress inline update
+- CSV export
 
 ---
 
-## 🤝 Contribution
-
-1. Fork repository
-2. Create feature branch
-3. Commit changes
-4. Push branch
-5. Open Pull Request
-
----
-
-## 📄 License
+## License
 
 MIT License
 
