@@ -107,7 +107,6 @@ export default function CategoriesTab() {
           icon={Tag}
           title="No categories yet"
           description="Create categories to organise your income and expenses."
-          action={{ label: 'Add Category', onClick: openCreate }}
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -201,21 +200,12 @@ export default function CategoriesTab() {
                 name="color"
                 control={control}
                 render={({ field }) => (
-                  <div className="flex gap-2">
-                    <Input
-                      value={field.value ?? ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      placeholder="#3b82f6"
-                      className="flex-1"
-                    />
-                    <input
-                      type="color"
-                      value={field.value || '#3b82f6'}
-                      onChange={field.onChange}
-                      className="h-10 w-10 rounded border cursor-pointer p-0.5"
-                    />
-                  </div>
+                  <input
+                    type="color"
+                    value={field.value || '#3b82f6'}
+                    onChange={field.onChange}
+                    className="h-10 w-10 rounded border cursor-pointer p-0.5"
+                  />
                 )}
               />
             </div>

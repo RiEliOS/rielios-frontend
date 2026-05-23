@@ -16,6 +16,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api } from '@/services/api'
+import { useMonthStore } from '@/store/month.store'
+import { useCurrencyFormat } from '@/hooks/useCurrencyFormat'
+import { useDateFormat } from '@/hooks/useDateFormat'
 
 interface Goal {
   id: string
@@ -81,18 +84,24 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-500',
 }
 
-const fmt = (n: string) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(parseFloat(n))
-
 export default function GoalsPage() {
   const qc = useQueryClient()
+  const fmt = useCurrencyFormat()
+  const { fmtDate } = useDateFormat()
+  const { selectedMonth, selectedYear } = useMonthStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Goal | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
-  const { data: goals = [], isLoading } = useQuery<Goal[]>({
+  const { data: allGoals = [], isLoading } = useQuery<Goal[]>({
     queryKey: ['goals'],
     queryFn: () => api.get('/goals').then((r) => r.data),
+  })
+
+  const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1)
+  const goals = allGoals.filter((g) => {
+    if (!g.targetDate) return true
+    return new Date(g.targetDate) >= startOfMonth
   })
 
   const { data: savings = [] } = useQuery<SavingGoal[]>({
@@ -123,8 +132,8 @@ export default function GoalsPage() {
       description: data.description || undefined,
       lifeAreaId: data.lifeAreaId === 'none' ? undefined : data.lifeAreaId || undefined,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['goals'] }); closeDialog(); toast.success('Goal created') },
-    onError: () => toast.error('Failed to create goal'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['goals'] }); closeDialog(); toast.success('Target created') },
+    onError: () => toast.error('Failed to create target'),
   })
 
   const updateMutation = useMutation({
@@ -134,14 +143,14 @@ export default function GoalsPage() {
       description: data.description || undefined,
       lifeAreaId: data.lifeAreaId === 'none' ? null : data.lifeAreaId || undefined,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['goals'] }); closeDialog(); toast.success('Goal updated') },
-    onError: () => toast.error('Failed to update goal'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['goals'] }); closeDialog(); toast.success('Target updated') },
+    onError: () => toast.error('Failed to update target'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/goals/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['goals'] }); setConfirmId(null); toast.success('Goal deleted') },
-    onError: () => toast.error('Failed to delete goal'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['goals'] }); setConfirmId(null); toast.success('Target deleted') },
+    onError: () => toast.error('Failed to delete target'),
   })
 
   function openCreate() {
@@ -176,10 +185,10 @@ export default function GoalsPage() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-900">Personal Goals</h1>
+          <h1 className="text-2xl font-black tracking-tight text-zinc-900">Targets</h1>
           <p className="text-sm text-zinc-500 mt-1">Track your milestones and achievements</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />New Goal</Button>
+        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />New Target</Button>
       </div>
 
       {isLoading ? (
@@ -191,9 +200,8 @@ export default function GoalsPage() {
       ) : goals.length === 0 ? (
         <EmptyState
           icon={Target}
-          title="No goals yet"
-          description="Create your first personal goal to start tracking your milestones."
-          action={{ label: 'New Goal', onClick: openCreate }}
+          title="No targets yet"
+          description="Create your first target to start tracking your milestones."
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -308,8 +316,8 @@ export default function GoalsPage() {
                           <div className="flex justify-between text-xs mb-0.5">
                             <span className="text-zinc-700">{inv.name}</span>
                             <span className="text-zinc-500">
-                              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(spent)}
-                              {budget > 0 && ` / ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(budget)}`}
+                              {fmt(spent)}
+                              {budget > 0 && ` / ${fmt(budget)}`}
                             </span>
                           </div>
                           {budget > 0 && <Progress value={pct} className="h-1" />}
@@ -320,7 +328,7 @@ export default function GoalsPage() {
                 )}
                 {goal.targetDate && (
                   <p className="text-xs text-zinc-400">
-                    Target: {new Date(goal.targetDate).toLocaleDateString()}
+                    Target: {fmtDate(goal.targetDate)}
                   </p>
                 )}
               </div>
@@ -331,8 +339,8 @@ export default function GoalsPage() {
 
       <ConfirmDialog
         open={!!confirmId}
-        title="Delete goal?"
-        description="This will permanently remove this goal."
+        title="Delete target?"
+        description="This will permanently remove this target."
         onConfirm={() => deleteMutation.mutate(confirmId!)}
         onCancel={() => setConfirmId(null)}
         isPending={deleteMutation.isPending}
@@ -341,7 +349,7 @@ export default function GoalsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? 'Edit Goal' : 'New Goal'}</DialogTitle>
+            <DialogTitle>{editing ? 'Edit Target' : 'New Target'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
             <div className="space-y-1.5">
@@ -352,7 +360,7 @@ export default function GoalsPage() {
 
             <div className="space-y-1.5">
               <Label>Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
-              <Textarea {...register('description')} placeholder="What does achieving this goal look like?" rows={2} />
+              <Textarea {...register('description')} placeholder="What does achieving this target look like?" rows={2} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">

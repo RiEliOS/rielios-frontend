@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, TrendingUp, MoreVertical, Search, CalendarDays } from 'lucide-react'
+import { Plus, Pencil, Trash2, TrendingUp, MoreVertical, Search } from 'lucide-react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { financeService } from '@/services/finance.service'
+import { useMonthStore } from '@/store/month.store'
+import { useCurrencyFormat, useCurrencyCode, stripAmountZeros } from '@/hooks/useCurrencyFormat'
+import { useDateFormat } from '@/hooks/useDateFormat'
 import type { Income, Category } from '@/types/finance'
 
 const schema = z.object({
@@ -26,19 +29,16 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
-const fmt = (n: string) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(parseFloat(n))
-
-const fmtDate = (d: string) =>
-  new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-
 export default function IncomeTab() {
   const qc = useQueryClient()
+  const fmt = useCurrencyFormat()
+  const currency = useCurrencyCode()
+  const { fmtDate } = useDateFormat()
+  const { monthStr } = useMonthStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Income | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [monthFilter, setMonthFilter] = useState(() => new Date().toISOString().slice(0, 7))
 
   const { data: incomeList = [], isLoading } = useQuery({
     queryKey: ['income'],
@@ -87,7 +87,7 @@ export default function IncomeTab() {
     setEditing(item)
     reset({
       sourceName: item.sourceName,
-      amount: item.amount,
+      amount: stripAmountZeros(item.amount),
       receivedDate: item.receivedDate,
       categoryId: item.categoryId ?? 'none',
       note: item.note ?? '',
@@ -108,7 +108,7 @@ export default function IncomeTab() {
   const filtered = [...incomeList]
     .sort((a, b) => b.receivedDate.localeCompare(a.receivedDate))
     .filter((item) => {
-      if (monthFilter && !item.receivedDate.startsWith(monthFilter)) return false
+      if (!item.receivedDate.startsWith(monthStr())) return false
       if (!search) return true
       return (
         item.sourceName.toLowerCase().includes(search.toLowerCase()) ||
@@ -116,46 +116,23 @@ export default function IncomeTab() {
       )
     })
 
-  const periodTotal = filtered.reduce((s, i) => s + parseFloat(i.amount), 0)
   const isPending = createMutation.isPending || updateMutation.isPending
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="rounded-2xl bg-green-50 border border-green-200 px-4 py-2.5">
-          <p className="text-xs text-green-600 font-semibold uppercase tracking-wide">
-            {monthFilter ? 'This Period' : 'All Time'}
-          </p>
-          <p className="text-xl font-black text-green-700">{fmt(periodTotal.toFixed(2))}</p>
-        </div>
+      <div className="flex justify-end">
         <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add Income</Button>
       </div>
 
       {incomeList.length > 0 && (
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-            <Input
-              placeholder="Search by source or category…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <div className="relative flex items-center">
-            <CalendarDays className="absolute left-3 h-4 w-4 text-zinc-400 pointer-events-none" />
-            <input
-              type="month"
-              value={monthFilter}
-              onChange={(e) => setMonthFilter(e.target.value)}
-              className="pl-9 pr-3 py-2 text-sm rounded-xl border border-zinc-200 bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          {monthFilter && (
-            <Button variant="ghost" size="sm" onClick={() => setMonthFilter('')} className="text-zinc-400 text-xs px-2">
-              All time
-            </Button>
-          )}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+          <Input
+            placeholder="Search by source or category…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
         </div>
       )}
 
@@ -166,11 +143,10 @@ export default function IncomeTab() {
           icon={TrendingUp}
           title="No income yet"
           description="Add your first income source to start tracking."
-          action={{ label: 'Add Income', onClick: openCreate }}
         />
       ) : filtered.length === 0 ? (
         <div className="flex justify-center py-12 text-zinc-400 text-sm">
-          {search ? `No results for "${search}"` : 'No income entries for this period.'}
+          {search ? `No results for "${search}"` : 'No income entries for this month.'}
         </div>
       ) : (
         <div className="space-y-2">
@@ -240,8 +216,8 @@ export default function IncomeTab() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Amount ($)</Label>
-                <Input {...register('amount')} placeholder="0.00" />
+                <Label>Amount ({currency})</Label>
+                <Input {...register('amount')} placeholder="0" />
                 {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
               </div>
               <div className="space-y-1.5">

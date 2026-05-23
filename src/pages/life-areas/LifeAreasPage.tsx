@@ -138,7 +138,6 @@ export default function LifeAreasPage() {
           icon={Layers}
           title="No life areas yet"
           description="Define the pillars of your life to organize goals and investments."
-          action={{ label: 'New Area', onClick: openCreate }}
         />
       ) : (
         <div className="bg-white rounded-2xl border border-zinc-200 divide-y divide-zinc-100">

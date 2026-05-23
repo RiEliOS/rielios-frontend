@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Sun, Moon, Monitor } from 'lucide-react'
+import { Loader2, Sun, Moon, Monitor, Camera } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import { api } from '@/services/api'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/store/auth.store'
 import { useMe } from '@/hooks/useAuth'
+import { useDateFormat } from '@/hooks/useDateFormat'
 import { cn } from '@/lib/utils'
 
 const CURRENCIES = [
@@ -77,6 +78,8 @@ export default function SettingsPage() {
   const qc = useQueryClient()
   const { user, token, setAuth } = useAuthStore()
   const { data: me } = useMe()
+  const { fmtDate } = useDateFormat()
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const profileForm = useForm<ProfileData>({
     resolver: zodResolver(profileSchema),
@@ -131,6 +134,16 @@ export default function SettingsPage() {
     onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to change password'),
   })
 
+  const avatarMutation = useMutation({
+    mutationFn: (file: File) => {
+      const fd = new FormData()
+      fd.append('avatar', file)
+      return api.post('/users/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
+    },
+    onSuccess: async () => { await refreshStore(); toast.success('Avatar updated') },
+    onError: () => toast.error('Failed to upload avatar'),
+  })
+
   const initials = me?.profile?.fullName
     ? (me.profile.fullName as string)
         .split(' ')
@@ -140,8 +153,7 @@ export default function SettingsPage() {
         .slice(0, 2)
     : user?.email?.[0]?.toUpperCase() ?? '?'
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const formatDate = (iso: string) => fmtDate(iso, { month: 'long' })
 
   return (
     <div className="p-6 lg:p-8 max-w-2xl space-y-6">
@@ -165,8 +177,41 @@ export default function SettingsPage() {
               <p className="text-sm text-zinc-400">Your personal information</p>
             </div>
             <div className="flex items-center gap-4 pb-6 border-b border-zinc-100">
-              <div className="h-16 w-16 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center shrink-0">
-                <span className="text-xl font-bold text-primary">{initials}</span>
+              <div className="relative shrink-0">
+                {me?.profile?.avatarUrl ? (
+                  <img
+                    src={`${import.meta.env.VITE_API_URL}${me.profile.avatarUrl}`}
+                    alt="Avatar"
+                    className="h-16 w-16 rounded-2xl object-cover border-2 border-primary/20"
+                  />
+                ) : (
+                  <div className="h-16 w-16 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center">
+                    <span className="text-xl font-bold text-primary">{initials}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarMutation.isPending}
+                  className="absolute -bottom-1.5 -right-1.5 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow hover:bg-primary/90 transition-colors"
+                >
+                  {avatarMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Camera className="h-3 w-3" />
+                  )}
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) avatarMutation.mutate(file)
+                    e.target.value = ''
+                  }}
+                />
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-zinc-800 truncate">{me?.profile?.fullName ?? user?.email}</p>

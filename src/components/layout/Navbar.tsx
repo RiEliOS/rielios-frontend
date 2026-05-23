@@ -1,10 +1,18 @@
+import { useState } from 'react'
 import { useNavigate, Link, NavLink } from 'react-router-dom'
-import { Settings, LogOut, ChevronDown, Menu } from 'lucide-react'
+import { Settings, LogOut, ChevronDown, Menu, ChevronLeft, ChevronRight } from 'lucide-react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
+import * as PopoverPrimitive from '@radix-ui/react-popover'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/auth.store'
+import { useMonthStore } from '@/store/month.store'
 import { useLogout } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
+
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+]
 
 const NAV_LINKS = [
   { to: '/', label: 'Home', end: true },
@@ -21,17 +29,33 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   const { user } = useAuthStore()
   const { mutate: logout } = useLogout()
   const navigate = useNavigate()
+  const { selectedMonth, selectedYear, prevMonth, nextMonth, monthLabel, isCurrentMonth, setMonth } = useMonthStore()
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerYear, setPickerYear] = useState(selectedYear)
+
+  const now = new Date()
+  const currentMonth = now.getMonth() + 1
+  const currentYear = now.getFullYear()
+
+  function handlePickerOpen(open: boolean) {
+    if (open) setPickerYear(selectedYear)
+    setPickerOpen(open)
+  }
+
+  function selectMonth(m: number) {
+    setMonth(m, pickerYear)
+    setPickerOpen(false)
+  }
+
+  function isFuture(m: number, y: number) {
+    return y > currentYear || (y === currentYear && m > currentMonth)
+  }
 
   const initials = user?.profile?.fullName
     ? user.profile.fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : user?.email?.[0]?.toUpperCase() ?? '?'
 
   const displayName = user?.profile?.fullName ?? user?.email ?? 'User'
-
-  const now = new Date()
-  const dateStr = now.toLocaleDateString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-  })
 
   return (
     <header className="h-14 border-b shrink-0 flex items-center justify-between px-4 gap-4">
@@ -73,10 +97,90 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
         ))}
       </nav>
 
-      {/* Right — date + profile */}
+      {/* Right — month picker + profile */}
       <div className="flex items-center gap-3 shrink-0">
-        <span className="text-xs text-muted-foreground hidden lg:block">{dateStr}</span>
-        <div className="h-4 w-px bg-border hidden lg:block" />
+
+        {/* Global month picker */}
+        <div className="flex items-center gap-0.5 bg-zinc-50 border border-zinc-200 rounded-xl px-1.5 py-1">
+          <button
+            onClick={prevMonth}
+            className="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-zinc-200 transition-colors"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="h-3.5 w-3.5 text-zinc-500" />
+          </button>
+
+          <PopoverPrimitive.Root open={pickerOpen} onOpenChange={handlePickerOpen}>
+            <PopoverPrimitive.Trigger asChild>
+              <button className="text-xs font-semibold text-zinc-700 w-28 text-center hover:text-zinc-900 transition-colors rounded-md px-1 py-0.5 hover:bg-zinc-200">
+                {monthLabel()}
+              </button>
+            </PopoverPrimitive.Trigger>
+            <PopoverPrimitive.Portal>
+              <PopoverPrimitive.Content
+                align="center"
+                sideOffset={8}
+                className="z-50 rounded-2xl border border-zinc-200 bg-white shadow-xl p-4 w-64 outline-none"
+                style={{ animationDuration: '0ms' }}
+              >
+                {/* Year row */}
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    onClick={() => setPickerYear((y) => y - 1)}
+                    className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-zinc-100 transition-colors"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5 text-zinc-500" />
+                  </button>
+                  <span className="text-sm font-bold text-zinc-800">{pickerYear}</span>
+                  <button
+                    onClick={() => setPickerYear((y) => y + 1)}
+                    disabled={pickerYear >= currentYear}
+                    className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-zinc-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5 text-zinc-500" />
+                  </button>
+                </div>
+
+                {/* Month grid */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {MONTH_NAMES.map((name, i) => {
+                    const m = i + 1
+                    const isSelected = m === selectedMonth && pickerYear === selectedYear
+                    const disabled = isFuture(m, pickerYear)
+                    return (
+                      <button
+                        key={m}
+                        onClick={() => !disabled && selectMonth(m)}
+                        disabled={disabled}
+                        className={cn(
+                          'rounded-xl px-2 py-2 text-xs font-semibold transition-colors',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : disabled
+                            ? 'text-zinc-300 cursor-not-allowed'
+                            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900',
+                        )}
+                      >
+                        {name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </PopoverPrimitive.Content>
+            </PopoverPrimitive.Portal>
+          </PopoverPrimitive.Root>
+
+          <button
+            onClick={nextMonth}
+            disabled={isCurrentMonth()}
+            className="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Next month"
+          >
+            <ChevronRight className="h-3.5 w-3.5 text-zinc-500" />
+          </button>
+        </div>
+
+        <div className="h-4 w-px bg-border" />
 
         <DropdownMenuPrimitive.Root>
           <DropdownMenuPrimitive.Trigger asChild>

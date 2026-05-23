@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, BarChart3, ListPlus, Target, MapPin, Eye, EyeOff, MoreVertical, ArrowRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, BarChart3, ListPlus, Target, MapPin, Eye, EyeOff, MoreVertical, ArrowRight, CheckCircle2 } from 'lucide-react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import * as TooltipPrimitive from '@radix-ui/react-tooltip'
 import { toast } from 'sonner'
@@ -17,6 +17,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api } from '@/services/api'
+import { useMonthStore } from '@/store/month.store'
+import { useCurrencyFormat, useCurrencyCode, stripAmountZeros } from '@/hooks/useCurrencyFormat'
 
 interface Investment {
   id: string
@@ -25,9 +27,12 @@ interface Investment {
   plannedBudget: string | null
   amountSpent: string
   amountReturned: string
+  amountExpenses: string
   expectedReturn: string | null
   status: string
   progress: number
+  startDate: string | null
+  targetDate: string | null
   personalGoalId: string | null
   lifeAreaId: string | null
 }
@@ -60,13 +65,15 @@ const schema = z.object({
   plannedBudget: z.string().regex(amountRegex, 'Enter a valid amount').optional().or(z.literal('')),
   expectedReturn: z.string().regex(amountRegex, 'Enter a valid amount').optional().or(z.literal('')),
   status: z.enum(['active', 'completed', 'paused', 'cancelled']),
+  startDate: z.string().optional(),
+  targetDate: z.string().optional(),
   personalGoalId: z.string().optional(),
   lifeAreaId: z.string().optional(),
 })
 type FormData = z.infer<typeof schema>
 
 const entrySchema = z.object({
-  entryType: z.enum(['contribution', 'return', 'note']),
+  entryType: z.enum(['contribution', 'expense', 'return', 'note']),
   amount: z.string().regex(amountRegex, 'Enter a valid amount').optional().or(z.literal('')),
   description: z.string().optional(),
 })
@@ -81,29 +88,50 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ENTRY_COLORS: Record<string, string> = {
   contribution: 'text-blue-600',
+  expense: 'text-orange-500',
   return: 'text-green-600',
   note: 'text-gray-500',
 }
 
-const fmt = (n: string | null) =>
-  n ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(parseFloat(n)) : '—'
+function computeTimeStatus(inv: Investment): { label: string; cls: string } | null {
+  if (!inv.targetDate || inv.status === 'completed' || inv.status === 'cancelled') return null
+  const now = Date.now()
+  const target = new Date(inv.targetDate).getTime()
+  const diffDays = Math.round((target - now) / (1000 * 60 * 60 * 24))
+  if (diffDays < 0) return { label: `Overdue · ${Math.abs(diffDays)}d past target`, cls: 'bg-red-100 text-red-600' }
+  if (diffDays === 0) return { label: 'Due today', cls: 'bg-orange-100 text-orange-600' }
+  if (diffDays <= 7) return { label: `${diffDays}d left — urgent`, cls: 'bg-yellow-100 text-yellow-700' }
+  return { label: `${diffDays}d left`, cls: 'bg-green-100 text-green-700' }
+}
 
 function computeProgress(inv: Investment): number {
   if (!inv.plannedBudget || parseFloat(inv.plannedBudget) === 0) return inv.progress
-  return Math.min((parseFloat(inv.amountSpent) / parseFloat(inv.plannedBudget)) * 100, 100)
+  const totalOut = parseFloat(inv.amountSpent) + parseFloat(inv.amountExpenses)
+  return Math.min((totalOut / parseFloat(inv.plannedBudget)) * 100, 100)
 }
 
 export default function InvestmentsPage() {
   const qc = useQueryClient()
+  const fmt = useCurrencyFormat()
+  const currency = useCurrencyCode()
+  const { selectedMonth, selectedYear, monthStr } = useMonthStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Investment | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [entriesInv, setEntriesInv] = useState<Investment | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [closeTarget, setCloseTarget] = useState<Investment | null>(null)
 
-  const { data: investments = [], isLoading } = useQuery<Investment[]>({
+  const { data: allInvestments = [], isLoading } = useQuery<Investment[]>({
     queryKey: ['investments'],
     queryFn: () => api.get('/investments').then((r) => r.data),
+  })
+
+  const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1)
+  const investments = allInvestments.filter((inv) => {
+    if (inv.startDate && new Date(inv.startDate) > new Date(selectedYear, selectedMonth, 0)) return false
+    if (inv.targetDate && new Date(inv.targetDate) < startOfMonth) return false
+    return true
   })
 
   const { data: goals = [] } = useQuery<Goal[]>({
@@ -144,6 +172,8 @@ export default function InvestmentsPage() {
       description: data.description || undefined,
       plannedBudget: data.plannedBudget || undefined,
       expectedReturn: data.expectedReturn || undefined,
+      startDate: data.startDate || undefined,
+      targetDate: data.targetDate || undefined,
       personalGoalId: data.personalGoalId === 'none' ? null : data.personalGoalId || undefined,
       lifeAreaId: data.lifeAreaId === 'none' ? null : data.lifeAreaId || undefined,
     }
@@ -193,9 +223,20 @@ export default function InvestmentsPage() {
     onError: () => toast.error('Failed to delete entry'),
   })
 
+  const closeMutation = useMutation({
+    mutationFn: (id: string) => api.patch(`/investments/${id}/close`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['investments'] })
+      qc.invalidateQueries({ queryKey: ['dashboard-summary'] })
+      setCloseTarget(null)
+      toast.success('Investment closed — P&L recorded')
+    },
+    onError: () => toast.error('Failed to close investment'),
+  })
+
   function openCreate() {
     setEditing(null)
-    reset({ name: '', description: '', plannedBudget: '', expectedReturn: '', status: 'active', personalGoalId: 'none', lifeAreaId: 'none' })
+    reset({ name: '', description: '', plannedBudget: '', expectedReturn: '', startDate: '', targetDate: '', status: 'active', personalGoalId: 'none', lifeAreaId: 'none' })
     setOpen(true)
   }
 
@@ -204,8 +245,10 @@ export default function InvestmentsPage() {
     reset({
       name: inv.name,
       description: inv.description ?? '',
-      plannedBudget: inv.plannedBudget ?? '',
-      expectedReturn: inv.expectedReturn ?? '',
+      plannedBudget: stripAmountZeros(inv.plannedBudget),
+      expectedReturn: stripAmountZeros(inv.expectedReturn),
+      startDate: inv.startDate ? inv.startDate.slice(0, 10) : '',
+      targetDate: inv.targetDate ? inv.targetDate.slice(0, 10) : '',
       status: (inv.status as any) || 'active',
       personalGoalId: inv.personalGoalId ?? 'none',
       lifeAreaId: inv.lifeAreaId ?? 'none',
@@ -222,10 +265,18 @@ export default function InvestmentsPage() {
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  const totalContributed = entries
+  const monthEntries = entries.filter((e) => {
+    const d = typeof e.entryDate === 'string' ? e.entryDate : new Date(e.entryDate).toISOString()
+    return d.startsWith(monthStr())
+  })
+
+  const totalContributed = monthEntries
     .filter((e) => e.entryType === 'contribution')
     .reduce((s, e) => s + parseFloat(e.amount ?? '0'), 0)
-  const totalReturned = entries
+  const totalExpenses = monthEntries
+    .filter((e) => e.entryType === 'expense')
+    .reduce((s, e) => s + parseFloat(e.amount ?? '0'), 0)
+  const totalReturned = monthEntries
     .filter((e) => e.entryType === 'return')
     .reduce((s, e) => s + parseFloat(e.amount ?? '0'), 0)
 
@@ -250,13 +301,15 @@ export default function InvestmentsPage() {
           icon={BarChart3}
           title="No investments yet"
           description="Start tracking your investment portfolio and see your returns grow."
-          action={{ label: 'New Investment', onClick: openCreate }}
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {investments.map((inv) => {
             const progress = computeProgress(inv)
+            const timeStatus = computeTimeStatus(inv)
             const hasBudget = inv.plannedBudget && parseFloat(inv.plannedBudget) > 0
+            const totalOut = parseFloat(inv.amountSpent) + parseFloat(inv.amountExpenses)
+            const isOverBudget = hasBudget && totalOut > parseFloat(inv.plannedBudget!)
             const linkedGoal = goals.find((g) => g.id === inv.personalGoalId)
             const lifeArea = lifeAreas.find((la) => la.id === inv.lifeAreaId)
             return (
@@ -293,6 +346,15 @@ export default function InvestmentsPage() {
                           <Pencil className="h-3.5 w-3.5" />
                           Edit
                         </DropdownMenuPrimitive.Item>
+                        {inv.status === 'active' && (
+                          <DropdownMenuPrimitive.Item
+                            onSelect={() => setCloseTarget(inv)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm rounded-sm cursor-pointer hover:bg-green-50 text-green-700 outline-none select-none"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Close Investment
+                          </DropdownMenuPrimitive.Item>
+                        )}
                         <DropdownMenuPrimitive.Item
                           onSelect={() => setConfirmId(inv.id)}
                           className="flex items-center gap-2 px-3 py-2 text-sm rounded-sm cursor-pointer hover:bg-destructive/10 text-destructive outline-none select-none"
@@ -319,6 +381,11 @@ export default function InvestmentsPage() {
                     </p>
                   )}
                 </div>
+                {timeStatus && (
+                  <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full ${timeStatus.cls}`}>
+                    {timeStatus.label}
+                  </span>
+                )}
                 <div className="flex items-center gap-2 text-sm">
                   <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
                     <p className="text-xs text-zinc-400">Budget</p>
@@ -327,8 +394,22 @@ export default function InvestmentsPage() {
                   <ArrowRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
                   <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
                     <p className="text-xs text-zinc-400">Contributed</p>
-                    <p className={`font-semibold tabular-nums ${hasBudget && parseFloat(inv.amountSpent) > parseFloat(inv.plannedBudget!) ? 'text-red-500' : 'text-zinc-700'}`}>
+                    <p className={`font-semibold tabular-nums ${isOverBudget ? 'text-red-500' : 'text-zinc-700'}`}>
                       {fmt(inv.amountSpent)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  {parseFloat(inv.amountExpenses) > 0 && (
+                    <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
+                      <p className="text-xs text-zinc-400">Expenses</p>
+                      <p className="font-semibold tabular-nums text-orange-500">{fmt(inv.amountExpenses)}</p>
+                    </div>
+                  )}
+                  <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
+                    <p className="text-xs text-zinc-400">Total Deployed</p>
+                    <p className={`font-semibold tabular-nums ${isOverBudget ? 'text-red-500' : 'text-zinc-700'}`}>
+                      {fmt(totalOut.toFixed(2))}
                     </p>
                   </div>
                 </div>
@@ -359,16 +440,16 @@ export default function InvestmentsPage() {
                 </div>
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className={hasBudget && parseFloat(inv.amountSpent) > parseFloat(inv.plannedBudget!) ? 'text-red-500 font-medium' : 'text-zinc-400'}>
-                      {hasBudget && parseFloat(inv.amountSpent) > parseFloat(inv.plannedBudget!) ? 'Over budget' : hasBudget ? 'Budget used' : 'Progress'}
+                    <span className={isOverBudget ? 'text-red-500 font-medium' : 'text-zinc-400'}>
+                      {isOverBudget ? 'Over budget' : hasBudget ? 'Budget used' : 'Progress'}
                     </span>
-                    <span className={hasBudget && parseFloat(inv.amountSpent) > parseFloat(inv.plannedBudget!) ? 'text-red-500 font-medium' : 'text-zinc-500'}>
+                    <span className={isOverBudget ? 'text-red-500 font-medium' : 'text-zinc-500'}>
                       {Math.round(progress)}%
                     </span>
                   </div>
                   <Progress
                     value={progress}
-                    className={`h-1.5 ${hasBudget && parseFloat(inv.amountSpent) > parseFloat(inv.plannedBudget!) ? '[&>div]:bg-red-500' : ''}`}
+                    className={`h-1.5 ${isOverBudget ? '[&>div]:bg-red-500' : ''}`}
                   />
                 </div>
               </div>
@@ -385,6 +466,66 @@ export default function InvestmentsPage() {
         onCancel={() => setConfirmId(null)}
         isPending={deleteMutation.isPending}
       />
+
+      {/* Close investment dialog */}
+      <Dialog open={!!closeTarget} onOpenChange={(v) => { if (!v) setCloseTarget(null) }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Close Investment</DialogTitle>
+          </DialogHeader>
+          {closeTarget && (() => {
+            const contributed = parseFloat(closeTarget.amountSpent)
+            const expenses = parseFloat(closeTarget.amountExpenses)
+            const returned = parseFloat(closeTarget.amountReturned)
+            const pnl = returned - contributed - expenses
+            const isGain = pnl >= 0
+            return (
+              <div className="space-y-4 mt-2">
+                <p className="text-sm text-zinc-600">
+                  Closing <span className="font-semibold">{closeTarget.name}</span> will record the realized P&amp;L and mark it as completed.
+                </p>
+                <div className="rounded-xl bg-zinc-50 border border-zinc-200 p-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Contributed</span>
+                    <span className="font-medium tabular-nums text-blue-600">{fmt(closeTarget.amountSpent)}</span>
+                  </div>
+                  {expenses > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Expenses (costs)</span>
+                      <span className="font-medium tabular-nums text-orange-500">{fmt(closeTarget.amountExpenses)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Returned</span>
+                    <span className="font-medium tabular-nums text-green-600">{fmt(closeTarget.amountReturned)}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-zinc-200 pt-2 mt-2">
+                    <span className="font-semibold text-zinc-700">Realized P&amp;L</span>
+                    <span className={`font-bold tabular-nums ${isGain ? 'text-green-600' : 'text-red-500'}`}>
+                      {isGain ? '+' : ''}{fmt(pnl.toFixed(2))}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-zinc-400">
+                  {isGain
+                    ? 'This gain will be added to your Net Flow for this month.'
+                    : 'This loss will be deducted from your Net Flow for this month.'}
+                </p>
+                <div className="flex gap-3 justify-end pt-1">
+                  <Button variant="outline" onClick={() => setCloseTarget(null)}>Cancel</Button>
+                  <Button
+                    onClick={() => closeMutation.mutate(closeTarget.id)}
+                    disabled={closeMutation.isPending}
+                    className={isGain ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+                  >
+                    {closeMutation.isPending ? 'Closing…' : isGain ? 'Confirm Gain' : 'Confirm Loss'}
+                  </Button>
+                </div>
+              </div>
+            )
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* Investment add/edit dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -406,28 +547,39 @@ export default function InvestmentsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Planned Budget ($) <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                <Input {...register('plannedBudget')} placeholder="0.00" />
+                <Label>Planned Budget ({currency}) <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input {...register('plannedBudget')} placeholder="0" />
                 {errors.plannedBudget && <p className="text-xs text-destructive">{errors.plannedBudget.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label>Expected Return ($) <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                <Input {...register('expectedReturn')} placeholder="0.00" />
+                <Input {...register('expectedReturn')} placeholder="0" />
                 {errors.expectedReturn && <p className="text-xs text-destructive">{errors.expectedReturn.message}</p>}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Personal Goal <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Label>Start Date <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input type="date" {...register('startDate')} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Target Date <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input type="date" {...register('targetDate')} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Target <span className="text-muted-foreground text-xs">(optional)</span></Label>
                 <Controller
                   name="personalGoalId"
                   control={control}
                   render={({ field }) => (
                     <Select value={field.value ?? 'none'} onValueChange={field.onChange}>
-                      <SelectTrigger><SelectValue placeholder="No goal" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="No target" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">No goal</SelectItem>
+                        <SelectItem value="none">No target</SelectItem>
                         {goals.map((g) => (
                           <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>
                         ))}
@@ -507,6 +659,7 @@ export default function InvestmentsPage() {
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="contribution">Contribution</SelectItem>
+                        <SelectItem value="expense">Expense</SelectItem>
                         <SelectItem value="return">Return</SelectItem>
                         <SelectItem value="note">Note</SelectItem>
                       </SelectContent>
@@ -515,8 +668,8 @@ export default function InvestmentsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Amount ($) <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                <Input {...regEntry('amount')} placeholder="0.00" />
+                <Label>Amount ({currency}) <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input {...regEntry('amount')} placeholder="0" />
                 {entryErrors.amount && <p className="text-xs text-destructive">{entryErrors.amount.message}</p>}
               </div>
             </div>
@@ -536,9 +689,9 @@ export default function InvestmentsPage() {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">History</span>
-                {entries.length > 0 && (
+                {monthEntries.length > 0 && (
                   <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                    {entries.length}
+                    {monthEntries.length}
                   </span>
                 )}
               </div>
@@ -574,7 +727,7 @@ export default function InvestmentsPage() {
             {historyOpen && (
               <>
                 {/* Summary stats */}
-                {entries.length > 0 && (
+                {monthEntries.length > 0 && (
                   <div className="flex flex-wrap gap-3 text-xs">
                     <span className="text-blue-600 font-medium">
                       Contributed: {fmt(totalContributed.toFixed(2))}
@@ -585,6 +738,11 @@ export default function InvestmentsPage() {
                         </span>
                       )}
                     </span>
+                    {totalExpenses > 0 && (
+                      <span className="text-orange-500 font-medium">
+                        Expenses: {fmt(totalExpenses.toFixed(2))}
+                      </span>
+                    )}
                     <span className="text-green-600 font-medium">
                       Returned: {fmt(totalReturned.toFixed(2))}
                       {entriesInv?.expectedReturn && parseFloat(entriesInv.expectedReturn) > 0 && (
@@ -595,18 +753,18 @@ export default function InvestmentsPage() {
                       )}
                     </span>
                     {totalReturned > 0 && (
-                      <span className={`font-medium ${totalReturned - totalContributed >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                        Net: {fmt((totalReturned - totalContributed).toFixed(2))}
+                      <span className={`font-medium ${totalReturned - totalContributed - totalExpenses >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        Net: {fmt((totalReturned - totalContributed - totalExpenses).toFixed(2))}
                       </span>
                     )}
                   </div>
                 )}
 
                 <div className="space-y-1.5 max-h-52 overflow-y-auto">
-                  {entries.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">No entries yet.</p>
+                  {monthEntries.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-6">No entries for this month.</p>
                   ) : (
-                    entries.map((e) => (
+                    monthEntries.map((e) => (
                       <div key={e.id} className="flex items-center justify-between rounded-md border px-3 py-2.5 text-sm">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className={`font-medium capitalize shrink-0 ${ENTRY_COLORS[e.entryType]}`}>{e.entryType}</span>

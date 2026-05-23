@@ -13,7 +13,7 @@ import PricingPage from '@/pages/landing/PricingPage'
 import ContactPage from '@/pages/landing/ContactPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import FinancePage from '@/pages/finance/FinancePage'
-import GoalsPage from '@/pages/goals/GoalsPage'
+import GoalsPage from '@/pages/goals/TargetsPage'
 import SavingsPage from '@/pages/savings/SavingsPage'
 import InvestmentsPage from '@/pages/investments/InvestmentsPage'
 import LifeAreasPage from '@/pages/life-areas/LifeAreasPage'
@@ -45,7 +45,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/finance/*" element={<FinancePage />} />
-            <Route path="/goals/*" element={<GoalsPage />} />
+            <Route path="/targets/*" element={<GoalsPage />} />
             <Route path="/savings/*" element={<SavingsPage />} />
             <Route path="/investments/*" element={<InvestmentsPage />} />
             <Route path="/life-areas/*" element={<LifeAreasPage />} />

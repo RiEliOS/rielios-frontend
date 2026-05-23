@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, Pencil, MoreVertical, AlertTriangle, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { Plus, Trash2, Pencil, MoreVertical, TrendingUp } from 'lucide-react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { financeService } from '@/services/finance.service'
+import { useCurrencyFormat, useCurrencyCode, stripAmountZeros } from '@/hooks/useCurrencyFormat'
+import { useMonthStore } from '@/store/month.store'
 import type { Category } from '@/types/finance'
 import { cn } from '@/lib/utils'
 
@@ -29,22 +31,23 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
-const fmt = (n: string | number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-    typeof n === 'string' ? parseFloat(n) : n,
-  )
-
 export default function BudgetsTab() {
   const qc = useQueryClient()
+  const fmt = useCurrencyFormat()
+  const currency = useCurrencyCode()
+  const { selectedMonth, selectedYear } = useMonthStore()
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
-  const now = new Date()
-  const { data: budgets = [], isLoading } = useQuery({
+  const { data: allBudgets = [], isLoading } = useQuery({
     queryKey: ['budgets'],
     queryFn: financeService.getBudgets,
   })
+
+  const budgets = allBudgets.filter(
+    (b) => b.month === selectedMonth && b.year === selectedYear,
+  )
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['categories'],
@@ -55,7 +58,7 @@ export default function BudgetsTab() {
 
   const { register, handleSubmit, control, reset, setError, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { month: now.getMonth() + 1, year: now.getFullYear() },
+    defaultValues: { month: selectedMonth, year: selectedYear },
   })
 
   const createMutation = useMutation({
@@ -86,13 +89,13 @@ export default function BudgetsTab() {
 
   function openCreate() {
     setEditingId(null)
-    reset({ categoryId: '', plannedBudget: '', month: now.getMonth() + 1, year: now.getFullYear() })
+    reset({ categoryId: '', plannedBudget: '', month: selectedMonth, year: selectedYear })
     setOpen(true)
   }
 
   function openEdit(b: { id: string; plannedBudget: string }) {
     setEditingId(b.id)
-    reset({ plannedBudget: b.plannedBudget, categoryId: '', month: now.getMonth() + 1, year: now.getFullYear() })
+    reset({ plannedBudget: stripAmountZeros(b.plannedBudget), categoryId: '', month: selectedMonth, year: selectedYear })
     setOpen(true)
   }
 
@@ -110,45 +113,8 @@ export default function BudgetsTab() {
   const isPending = createMutation.isPending || updateMutation.isPending
   const getCategoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? '—'
 
-  const overBudgetItems = budgets.filter((b) => parseFloat(b.actualSpent) > parseFloat(b.plannedBudget))
-  const totalOverage = overBudgetItems.reduce(
-    (sum, b) => sum + (parseFloat(b.actualSpent) - parseFloat(b.plannedBudget)), 0,
-  )
-
   return (
     <div className="space-y-4">
-
-      {/* Over-budget alert banner */}
-      {overBudgetItems.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
-          <div className="h-9 w-9 rounded-xl bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-red-700">
-              {overBudgetItems.length} budget{overBudgetItems.length > 1 ? 's' : ''} exceeded
-            </p>
-            <p className="text-xs text-red-600 mt-0.5">
-              Total overage: <span className="font-bold">{fmt(totalOverage)}</span> across{' '}
-              {overBudgetItems.map((b) => getCategoryName(b.categoryId)).join(', ')}.
-              Adjust the planned budget or reduce spending.
-            </p>
-          </div>
-          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-semibold shrink-0">
-            {fmt(totalOverage)} over
-          </span>
-        </div>
-      )}
-
-      {/* All on track banner */}
-      {!isLoading && budgets.length > 0 && overBudgetItems.length === 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
-          <div className="h-8 w-8 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          </div>
-          <p className="text-sm font-medium text-green-700">All budgets are on track this period.</p>
-        </div>
-      )}
 
       <div className="flex justify-end">
         <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add Budget</Button>
@@ -159,7 +125,7 @@ export default function BudgetsTab() {
           {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-2xl bg-zinc-100 animate-pulse" />)}
         </div>
       ) : budgets.length === 0 ? (
-        <EmptyState message="No budgets set yet. Create one to track spending limits." />
+        <EmptyState message="No budgets set for this month. Create one to track spending limits." />
       ) : (
         <div className="space-y-3">
           {budgets.map((b) => {
@@ -339,8 +305,8 @@ export default function BudgetsTab() {
             )}
 
             <div className="space-y-1.5">
-              <Label>Planned Budget ($)</Label>
-              <Input {...register('plannedBudget')} placeholder="0.00" />
+              <Label>Planned Budget ({currency})</Label>
+              <Input {...register('plannedBudget')} placeholder="0" />
               {errors.plannedBudget && <p className="text-xs text-destructive">{errors.plannedBudget.message}</p>}
             </div>
 

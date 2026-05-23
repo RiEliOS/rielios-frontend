@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/finance', icon: TrendingUp, label: 'Finance' },
-  { to: '/goals', icon: Target, label: 'Goals' },
+  { to: '/targets', icon: Target, label: 'My Targets' },
   { to: '/savings', icon: PiggyBank, label: 'Savings' },
   { to: '/investments', icon: BarChart3, label: 'Investments' },
   { to: '/life-areas', icon: Layers, label: 'Life Areas' },

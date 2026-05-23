@@ -17,6 +17,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { financeService } from '@/services/finance.service'
 import { api } from '@/services/api'
 import { useAuthStore } from '@/store/auth.store'
+import { useMonthStore } from '@/store/month.store'
+import { useCurrencyFormat, useCurrencyCode } from '@/hooks/useCurrencyFormat'
+import { useDateFormat } from '@/hooks/useDateFormat'
 import { cn } from '@/lib/utils'
 
 const incomeSchema = z.object({
@@ -46,10 +49,10 @@ interface BudgetItem {
   id: string; categoryName: string; plannedBudget: string; actualSpent: string
 }
 interface DashboardSummary {
-  currentMonth: { income: number; expenses: number; invested: number; availableCash: number; netFlow: number }
+  currentMonth: { income: number; expenses: number; invested: number; returned: number; saved: number; availableCash: number; netFlow: number }
   savings: { activeGoals: number; totalSaved: number; totalTarget: number; goals: SavingGoalSummary[] }
   goals: { activeGoals: number; goals: PersonalGoalSummary[] }
-  investments: { active: number; totalInvested: number; totalBudget: number; totalReturned: number; totalExpectedReturn: number }
+  investments: { active: number; totalInvested: number; totalExpenses: number; totalBudget: number; totalReturned: number; totalExpectedReturn: number }
   recentTransactions: Transaction[]
   budgets: { total: number; overCount: number; totalPlanned: number; totalSpent: number; items: BudgetItem[] }
 }
@@ -62,10 +65,15 @@ const PRIORITY_STYLES: Record<string, string> = {
 
 export default function DashboardPage() {
   const qc = useQueryClient()
+  const fmt = useCurrencyFormat()
+  const currency = useCurrencyCode()
+  const { fmtDateShort, timeZone } = useDateFormat()
   const { user } = useAuthStore()
-  const currency = user?.profile?.currency ?? 'USD'
   const [quickIncome, setQuickIncome] = useState(false)
   const [quickExpense, setQuickExpense] = useState(false)
+
+  const { selectedMonth, selectedYear } = useMonthStore()
+  const now = new Date()
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -104,20 +112,11 @@ export default function DashboardPage() {
   })
 
   const { data: summary, isLoading } = useQuery<DashboardSummary>({
-    queryKey: ['dashboard-summary'],
-    queryFn: () => api.get('/dashboard/summary').then((r) => r.data),
+    queryKey: ['dashboard-summary', selectedMonth, selectedYear],
+    queryFn: () => api.get('/dashboard/summary', { params: { month: selectedMonth, year: selectedYear } }).then((r) => r.data),
   })
 
-  const fmt = (n: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(n)
-
-  const fmtDate = (d: string) => {
-    const date = new Date(d.length === 10 ? d + 'T00:00:00' : d)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
-
-  const now = new Date()
-  const dateLabel = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const dateLabel = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone })
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
   const firstName = user?.profile?.fullName?.split(' ')[0] ?? 'there'
 
@@ -150,7 +149,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-black tracking-tight text-zinc-900">{greeting}, {firstName}</h1>
           <p className="text-sm text-zinc-500 mt-1">{dateLabel}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           <Button size="sm" variant="outline" className="gap-1.5 border-green-200 text-green-700 hover:bg-green-50" onClick={() => setQuickIncome(true)}>
             <Plus className="h-3.5 w-3.5" />Income
           </Button>
@@ -161,11 +160,11 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         <StatCard
           title="Net Flow"
           value={(netFlow >= 0 ? '+' : '') + fmt(netFlow)}
-          sub="Income minus expenses"
+          sub="Income + realized P&L − expenses − inv. costs"
           Icon={netFlow >= 0 ? TrendingUp : TrendingDown}
           bg={netFlow >= 0 ? 'bg-green-50' : 'bg-red-50'}
           border={netFlow >= 0 ? 'border-green-200' : 'border-red-200'}
@@ -189,9 +188,37 @@ export default function DashboardPage() {
           iconBg="bg-red-100" accent="text-red-700"
         />
         <StatCard
+          title="Invested"
+          value={fmt(s.currentMonth.invested)}
+          sub="Deployed this month"
+          Icon={BarChart3}
+          bg="bg-indigo-50" border="border-indigo-200"
+          iconBg="bg-indigo-100" accent="text-indigo-700"
+        />
+        <StatCard
+          title="Inv. Returns"
+          value={fmt(s.currentMonth.returned)}
+          sub="Returned from investments"
+          Icon={BarChart3}
+          bg="bg-purple-50" border="border-purple-200"
+          iconBg="bg-purple-100" accent="text-purple-700"
+        />
+        <StatCard
+          title="Saved"
+          value={fmt(s.currentMonth.saved)}
+          sub="Deposited to goals"
+          Icon={PiggyBank}
+          bg="bg-teal-50" border="border-teal-200"
+          iconBg="bg-teal-100" accent="text-teal-700"
+        />
+        <StatCard
           title="Cash Available"
           value={fmt(s.currentMonth.availableCash)}
-          sub={s.currentMonth.invested > 0 ? `After ${fmt(s.currentMonth.invested)} invested` : 'After all expenses'}
+          sub={
+            s.currentMonth.invested > 0 || s.currentMonth.returned > 0 || s.currentMonth.saved > 0
+              ? 'Income + returns − expenses − invested − saved'
+              : 'After all expenses'
+          }
           Icon={Wallet}
           bg="bg-blue-50" border="border-blue-200"
           iconBg="bg-blue-100" accent="text-blue-700"
@@ -274,21 +301,44 @@ export default function DashboardPage() {
             <p className="text-xs text-zinc-400 py-2">No active investments.</p>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-zinc-400">Budget</p>
-                  <p className="text-sm font-bold text-zinc-900 truncate">{fmt(s.investments.totalBudget)}</p>
-                </div>
-                <ArrowRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
-                <div className="flex-1 min-w-0 text-right">
-                  <p className="text-xs text-zinc-400">Contributed</p>
-                  <p className={cn('text-sm font-bold truncate',
-                    s.investments.totalInvested > s.investments.totalBudget ? 'text-red-600' : 'text-zinc-900'
-                  )}>
-                    {fmt(s.investments.totalInvested)}
-                  </p>
-                </div>
-              </div>
+              {(() => {
+                const totalOut = s.investments.totalInvested + s.investments.totalExpenses
+                const isOverBudget = s.investments.totalBudget > 0 && totalOut > s.investments.totalBudget
+                return (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-zinc-400">Budget</p>
+                        <p className="text-sm font-bold text-zinc-900 truncate">{fmt(s.investments.totalBudget)}</p>
+                      </div>
+                      <ArrowRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
+                      <div className="flex-1 min-w-0 text-right">
+                        <p className="text-xs text-zinc-400">Contributed</p>
+                        <p className={cn('text-sm font-bold truncate', isOverBudget ? 'text-red-600' : 'text-zinc-900')}>
+                          {fmt(s.investments.totalInvested)}
+                        </p>
+                      </div>
+                    </div>
+                    {s.investments.totalExpenses > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-400">Expenses (costs)</span>
+                        <span className="font-semibold tabular-nums text-orange-500">
+                          −{fmt(s.investments.totalExpenses)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-xs border-t border-zinc-100 pt-2">
+                      <span className="text-zinc-500 font-medium">Total Deployed</span>
+                      <span className={cn('font-bold tabular-nums', isOverBudget ? 'text-red-600' : 'text-zinc-800')}>
+                        {fmt(totalOut)}
+                      </span>
+                    </div>
+                    {isOverBudget && (
+                      <p className="text-xs text-red-500 font-medium">Over budget by {fmt(totalOut - s.investments.totalBudget)}</p>
+                    )}
+                  </>
+                )
+              })()}
               <div className="flex items-center gap-2 pt-3 border-t border-zinc-100">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-zinc-400">Exp. Return</p>
@@ -298,7 +348,8 @@ export default function DashboardPage() {
                 <div className="flex-1 min-w-0 text-right">
                   <p className="text-xs text-zinc-400">Returned</p>
                   <p className={cn('text-sm font-bold truncate',
-                    s.investments.totalReturned >= s.investments.totalExpectedReturn ? 'text-green-600' : 'text-zinc-900'
+                    s.investments.totalExpectedReturn > 0 && s.investments.totalReturned >= s.investments.totalExpectedReturn
+                      ? 'text-green-600' : 'text-zinc-900'
                   )}>
                     {fmt(s.investments.totalReturned)}
                   </p>
@@ -315,7 +366,7 @@ export default function DashboardPage() {
               <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
                 <Target className="h-4 w-4 text-amber-700" />
               </div>
-              <span className="text-sm font-bold text-zinc-900">Goals</span>
+              <span className="text-sm font-bold text-zinc-900">Targets</span>
             </div>
             {s.goals.activeGoals > 0 && (
               <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">
@@ -325,7 +376,7 @@ export default function DashboardPage() {
           </div>
 
           {s.goals.activeGoals === 0 ? (
-            <p className="text-xs text-zinc-400 py-2">No active goals.</p>
+            <p className="text-xs text-zinc-400 py-2">No active targets.</p>
           ) : (
             <div className="space-y-3.5">
               {s.goals.goals.map((g) => (
@@ -427,7 +478,7 @@ export default function DashboardPage() {
                 )}>
                   {tx.type === 'income' ? '+' : '-'}{fmt(parseFloat(tx.amount))}
                 </span>
-                <span className="text-xs text-zinc-400 shrink-0 w-14 text-right">{fmtDate(tx.date)}</span>
+                <span className="text-xs text-zinc-400 shrink-0 w-14 text-right">{fmtDateShort(tx.date)}</span>
               </div>
             ))}
           </div>
@@ -448,8 +499,8 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Amount ($)</Label>
-                <Input {...incomeForm.register('amount')} placeholder="0.00" />
+                <Label>Amount ({currency})</Label>
+                <Input {...incomeForm.register('amount')} placeholder="0" />
                 {incomeForm.formState.errors.amount && (
                   <p className="text-xs text-destructive">{incomeForm.formState.errors.amount.message}</p>
                 )}
@@ -483,8 +534,8 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Amount ($)</Label>
-                <Input {...expenseForm.register('amount')} placeholder="0.00" />
+                <Label>Amount ({currency})</Label>
+                <Input {...expenseForm.register('amount')} placeholder="0" />
                 {expenseForm.formState.errors.amount && (
                   <p className="text-xs text-destructive">{expenseForm.formState.errors.amount.message}</p>
                 )}
@@ -519,7 +570,7 @@ function StatCard({ title, value, sub, Icon, bg, border, iconBg, accent }: {
       </div>
       <div>
         <p className={cn('text-xs font-semibold uppercase tracking-wide', accent)}>{title}</p>
-        <p className={cn('text-xl font-black mt-0.5 truncate', accent)}>{value}</p>
+        <p className={cn('text-xs font-black mt-0.5 truncate', accent)}>{value}</p>
         <p className="text-xs text-zinc-500 mt-0.5">{sub}</p>
       </div>
     </div>
