@@ -180,7 +180,7 @@ export default function SettingsPage() {
               <div className="relative shrink-0">
                 {me?.profile?.avatarUrl ? (
                   <img
-                    src={`${import.meta.env.VITE_API_URL}${me.profile.avatarUrl}`}
+                    src={me.profile.avatarUrl}
                     alt="Avatar"
                     className="h-16 w-16 rounded-2xl object-cover border-2 border-primary/20"
                   />
