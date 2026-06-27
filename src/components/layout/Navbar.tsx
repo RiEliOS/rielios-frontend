@@ -3,7 +3,7 @@ import { useNavigate, Link, NavLink } from 'react-router-dom'
 import { Settings, LogOut, ChevronDown, Menu, ChevronLeft, ChevronRight } from 'lucide-react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/auth.store'
 import { useMonthStore } from '@/store/month.store'
 import { useLogout } from '@/hooks/useAuth'
@@ -186,6 +186,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
           <DropdownMenuPrimitive.Trigger asChild>
             <button className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 outline-none hover:bg-accent transition-colors">
               <Avatar className="h-7 w-7 shrink-0">
+                <AvatarImage src={user?.profile?.avatarUrl ?? undefined} alt={displayName} className="object-cover" />
                 <AvatarFallback className="text-xs font-semibold bg-primary text-primary-foreground">
                   {initials}
                 </AvatarFallback>
