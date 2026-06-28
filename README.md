@@ -259,10 +259,12 @@ Reusable empty state with icon, title, description, and optional call-to-action 
 Reusable delete confirmation dialog. Applied consistently across all pages — no destructive action fires immediately on click.
 
 ### Design system conventions
-- Cards: `bg-white rounded-2xl border border-zinc-200`
+- Cards: `bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700`
 - All mutations show `toast.success` / `toast.error` feedback via Sonner
 - Loading states use skeleton pulse animations
 - Mobile-responsive tab overflow via `overflow-x-auto` on Finance tabs
+- Dark mode toggled via `.dark` class on `<html>` from the user's saved theme preference
+- `@custom-variant dark` in `index.css` enables class-based dark mode for Tailwind v4
 
 ---
 
@@ -382,10 +384,17 @@ Cloudflare DNS:
 - EmptyState and ConfirmDialog shared components
 - Mobile-responsive finance tab overflow
 
-### Phase 9 — Documents 📋 Planned
+### Phase 9 — Dark Mode ✅ Complete
+- Full system dark mode across every page and component
+- Class-based dark mode via `@custom-variant dark` in Tailwind v4
+- Theme persisted in user profile (light / dark / system)
+- Applied to: Dashboard, Finance, Savings, Investments, Goals, Life Areas, Reports, Settings, and all shared components
+- PNG icon blend-mode fix (`dark:mix-blend-normal`) for visibility on dark backgrounds
+
+### Phase 10 — Documents 📋 Planned
 - Upload and manage receipts, contracts, and financial records
 
-### Phase 10 — Advanced Analytics 📋 Planned
+### Phase 11 — Advanced Analytics 📋 Planned
 - Income/expense trend charts (bar, line)
 - Category filter on income/expense lists
 - Savings contribution shortcut
