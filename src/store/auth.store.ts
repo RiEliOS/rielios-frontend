@@ -6,25 +6,22 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
       isAuthenticated: false,
       isLoading: false,
 
-      setAuth: (user: User, token: string) => {
-        localStorage.setItem('token', token)
-        set({ user, token, isAuthenticated: true })
+      setAuth: (user: User) => {
+        set({ user, isAuthenticated: true })
       },
 
       clearAuth: () => {
-        localStorage.removeItem('token')
-        set({ user: null, token: null, isAuthenticated: false })
+        set({ user: null, isAuthenticated: false })
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
     }),
     {
       name: 'rielios-auth',
-      partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
     }
   )
 )

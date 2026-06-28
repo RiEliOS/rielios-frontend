@@ -76,7 +76,7 @@ type PasswordData = z.infer<typeof passwordSchema>
 
 export default function SettingsPage() {
   const qc = useQueryClient()
-  const { user, token, setAuth } = useAuthStore()
+  const { user, setAuth } = useAuthStore()
   const { data: me } = useMe()
   const { fmtDate } = useDateFormat()
   const avatarInputRef = useRef<HTMLInputElement>(null)
@@ -111,7 +111,7 @@ export default function SettingsPage() {
 
   const refreshStore = async () => {
     const freshUser = await authService.getMe()
-    setAuth(freshUser, token!)
+    setAuth(freshUser)
     qc.invalidateQueries({ queryKey: ['me'] })
   }
 

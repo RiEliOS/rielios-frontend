@@ -14,10 +14,9 @@ export interface User {
 
 export interface AuthState {
   user: User | null
-  token: string | null
   isAuthenticated: boolean
   isLoading: boolean
-  setAuth: (user: User, token: string) => void
+  setAuth: (user: User) => void
   clearAuth: () => void
   setLoading: (loading: boolean) => void
 }
@@ -35,5 +34,4 @@ export interface LoginPayload {
 
 export interface AuthResponse {
   user: User
-  token: string
 }

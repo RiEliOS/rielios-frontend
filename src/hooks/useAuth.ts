@@ -11,7 +11,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (payload: LoginPayload) => authService.login(payload),
     onSuccess: (data) => {
-      setAuth(data.user, data.token)
+      setAuth(data.user)
       navigate('/dashboard')
     },
   })
@@ -24,7 +24,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: (payload: RegisterPayload) => authService.register(payload),
     onSuccess: (data) => {
-      setAuth(data.user, data.token)
+      setAuth(data.user)
       navigate('/dashboard')
     },
   })

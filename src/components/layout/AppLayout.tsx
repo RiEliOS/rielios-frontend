@@ -18,10 +18,10 @@ function applyTheme(theme: string | null | undefined) {
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { data: me } = useMe()
-  const { token, setAuth } = useAuthStore()
+  const { setAuth } = useAuthStore()
 
   useEffect(() => {
-    if (me && token) setAuth(me, token)
+    if (me) setAuth(me)
   }, [me])
 
   useEffect(() => {
