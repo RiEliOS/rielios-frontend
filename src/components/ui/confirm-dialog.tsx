@@ -26,7 +26,7 @@ export function ConfirmDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-zinc-500 -mt-1">{description}</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 -mt-1">{description}</p>
         <div className="flex gap-3 justify-end pt-1">
           <Button variant="outline" onClick={onCancel} disabled={isPending}>Cancel</Button>
           <Button variant="destructive" onClick={onConfirm} disabled={isPending}>

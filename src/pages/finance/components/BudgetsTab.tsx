@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, Pencil, MoreVertical, TrendingUp } from 'lucide-react'
+import { Plus, Trash2, Pencil, MoreVertical } from 'lucide-react'
+import cashIcon from '@/assets/cash.png'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -122,7 +123,7 @@ export default function BudgetsTab() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-2xl bg-zinc-100 animate-pulse" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-2xl bg-zinc-100 dark:bg-zinc-700 animate-pulse" />)}
         </div>
       ) : budgets.length === 0 ? (
         <EmptyState message="No budgets set for this month. Create one to track spending limits." />
@@ -143,10 +144,10 @@ export default function BudgetsTab() {
                 className={cn(
                   'rounded-2xl border p-4 space-y-3 transition-colors',
                   over
-                    ? 'bg-red-50 border-red-200'
+                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40'
                     : rawPct >= 80
-                    ? 'bg-amber-50 border-amber-200'
-                    : 'bg-white border-zinc-200',
+                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40'
+                    : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700',
                 )}
               >
                 {/* Header row */}
@@ -154,18 +155,15 @@ export default function BudgetsTab() {
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className={cn(
                       'h-8 w-8 rounded-lg flex items-center justify-center shrink-0',
-                      over ? 'bg-red-100' : rawPct >= 80 ? 'bg-amber-100' : 'bg-zinc-100',
+                      over ? 'bg-red-100 dark:bg-red-900/40' : rawPct >= 80 ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-zinc-100 dark:bg-zinc-700',
                     )}>
-                      <TrendingUp className={cn(
-                        'h-4 w-4',
-                        over ? 'text-red-600' : rawPct >= 80 ? 'text-amber-600' : 'text-zinc-500',
-                      )} />
+                      <img src={cashIcon} alt="" className="h-5 w-5 object-contain mix-blend-multiply dark:mix-blend-normal" />
                     </div>
                     <div className="min-w-0">
-                      <p className={cn('font-bold text-sm truncate', over ? 'text-red-900' : 'text-zinc-900')}>
+                      <p className={cn('font-bold text-sm truncate', over ? 'text-red-900 dark:text-red-300' : 'text-zinc-900 dark:text-zinc-100')}>
                         {getCategoryName(b.categoryId)}
                       </p>
-                      <p className={cn('text-xs', over ? 'text-red-600' : 'text-zinc-500')}>
+                      <p className={cn('text-xs', over ? 'text-red-600 dark:text-red-400' : 'text-zinc-500 dark:text-zinc-400')}>
                         {fmt(spent)} <span className="opacity-60">of</span> {fmt(planned)}
                       </p>
                     </div>
@@ -174,15 +172,15 @@ export default function BudgetsTab() {
                   <div className="flex items-center gap-2 shrink-0">
                     {/* Status badge */}
                     {over ? (
-                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">
+                      <span className="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full font-bold">
                         +{fmt(overage)} over
                       </span>
                     ) : rawPct >= 80 ? (
-                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">
+                      <span className="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-semibold">
                         {fmt(remaining)} left
                       </span>
                     ) : (
-                      <span className="text-xs bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded-full font-semibold">
+                      <span className="text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 px-2 py-0.5 rounded-full font-semibold">
                         {fmt(remaining)} left
                       </span>
                     )}
@@ -222,7 +220,7 @@ export default function BudgetsTab() {
 
                 {/* Progress bar + percentage */}
                 <div className="space-y-1">
-                  <div className="h-2 bg-white/60 rounded-full overflow-hidden border border-black/5">
+                  <div className="h-2 bg-white/60 dark:bg-zinc-700/60 rounded-full overflow-hidden border border-black/5 dark:border-white/5">
                     <div
                       className={cn(
                         'h-full rounded-full transition-all',
@@ -234,12 +232,12 @@ export default function BudgetsTab() {
                   <div className="flex justify-between items-center">
                     <span className={cn(
                       'text-[10px] font-semibold',
-                      over ? 'text-red-600' : rawPct >= 80 ? 'text-amber-600' : 'text-zinc-400',
+                      over ? 'text-red-600 dark:text-red-400' : rawPct >= 80 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500',
                     )}>
                       {rawPct.toFixed(0)}% used
                     </span>
                     {over && (
-                      <span className="text-[10px] text-red-500 font-medium">
+                      <span className="text-[10px] text-red-500 dark:text-red-400 font-medium">
                         Exceeds limit by {((rawPct - 100).toFixed(0))}%
                       </span>
                     )}
@@ -334,8 +332,8 @@ export default function BudgetsTab() {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 py-16 text-center">
-      <p className="text-sm text-zinc-400">{message}</p>
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 py-16 text-center">
+      <p className="text-sm text-zinc-400 dark:text-zinc-500">{message}</p>
     </div>
   )
 }

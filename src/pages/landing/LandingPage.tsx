@@ -113,7 +113,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-zinc-500 text-lg leading-relaxed">
-              Income, expenses, savings goals, investments, personal goals, life areas —
+              Income, expenses, savings, investments, personal goals, life aspects —
               stop juggling five apps and three spreadsheets.
             </p>
 
@@ -235,8 +235,8 @@ export default function LandingPage() {
                 icon: Target,
                 tag: 'Goals & Savings',
                 title: 'Turn "someday" into a deadline.',
-                body: 'Create personal goals tied to life areas, back them with savings pots that track real progress.',
-                pills: ['Life area mapping', 'Savings pots', 'Deadline tracking', 'Progress %'],
+                body: 'Create personal goals tied to life aspects, back them with savings pots that track real progress.',
+                pills: ['Life aspect mapping', 'Savings pots', 'Deadline tracking', 'Progress %'],
                 accent: 'bg-blue-50 border-blue-200',
                 iconBg: 'bg-blue-100 text-blue-700',
               },

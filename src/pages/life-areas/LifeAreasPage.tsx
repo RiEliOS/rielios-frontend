@@ -5,7 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
-import { Plus, Layers, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { Plus, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import lifeAspectsIcon from '@/assets/lifeaspects.png'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -68,8 +69,8 @@ export default function LifeAreasPage() {
       description: data.description || undefined,
       icon: data.icon || undefined,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['life-areas'] }); closeDialog(); toast.success('Life area created') },
-    onError: () => toast.error('Failed to create life area'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['life-areas'] }); closeDialog(); toast.success('Life aspect created') },
+    onError: () => toast.error('Failed to create life aspect'),
   })
 
   const updateMutation = useMutation({
@@ -78,14 +79,14 @@ export default function LifeAreasPage() {
       description: data.description || undefined,
       icon: data.icon || undefined,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['life-areas'] }); closeDialog(); toast.success('Life area updated') },
-    onError: () => toast.error('Failed to update life area'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['life-areas'] }); closeDialog(); toast.success('Life aspect updated') },
+    onError: () => toast.error('Failed to update life aspect'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/life-areas/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['life-areas'] }); setConfirmId(null); toast.success('Life area deleted') },
-    onError: () => toast.error('Failed to delete life area'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['life-areas'] }); setConfirmId(null); toast.success('Life aspect deleted') },
+    onError: () => toast.error('Failed to delete life aspect'),
   })
 
   function openCreate() {
@@ -118,38 +119,38 @@ export default function LifeAreasPage() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-900">Life Areas</h1>
-          <p className="text-sm text-zinc-500 mt-1">Organize the key areas of your life</p>
+          <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">Life Aspects</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Organize the key aspects of your life</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />New Area</Button>
+        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />New Aspect</Button>
       </div>
 
       {isLoading ? (
-        <div className="bg-white rounded-2xl border border-zinc-200 divide-y divide-zinc-100">
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 divide-y divide-zinc-100 dark:divide-zinc-700">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 px-4 py-3">
-              <div className="h-9 w-9 rounded-xl animate-pulse bg-zinc-100 shrink-0" />
-              <div className="flex-1 h-4 animate-pulse bg-zinc-100 rounded" />
+              <div className="h-9 w-9 rounded-xl animate-pulse bg-zinc-100 dark:bg-zinc-700 shrink-0" />
+              <div className="flex-1 h-4 animate-pulse bg-zinc-100 dark:bg-zinc-700 rounded" />
             </div>
           ))}
         </div>
       ) : areas.length === 0 ? (
         <EmptyState
-          icon={Layers}
-          title="No life areas yet"
-          description="Define the pillars of your life to organize goals and investments."
+          icon={lifeAspectsIcon}
+          title="No life aspects yet"
+          description="Define the aspects of your life to organize goals and investments."
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-zinc-200 divide-y divide-zinc-100">
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 divide-y divide-zinc-100 dark:divide-zinc-700">
           {areas.map((area) => (
             <div key={area.id} className="flex items-center gap-3 px-4 py-3">
-              <div className="h-9 w-9 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-sm font-bold shrink-0 select-none">
+              <div className="h-9 w-9 rounded-xl bg-zinc-100 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center text-sm font-bold shrink-0 select-none">
                 {area.icon || area.name[0]?.toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-zinc-800">{area.name}</p>
+                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{area.name}</p>
                 {area.description && (
-                  <p className="text-xs text-zinc-400 truncate">{area.description}</p>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate">{area.description}</p>
                 )}
               </div>
               <DropdownMenuPrimitive.Root>
@@ -189,8 +190,8 @@ export default function LifeAreasPage() {
 
       <ConfirmDialog
         open={!!confirmId}
-        title="Delete life area?"
-        description="This will permanently remove this life area."
+        title="Delete life aspect?"
+        description="This will permanently remove this life aspect."
         onConfirm={() => deleteMutation.mutate(confirmId!)}
         onCancel={() => setConfirmId(null)}
         isPending={deleteMutation.isPending}
@@ -199,7 +200,7 @@ export default function LifeAreasPage() {
       <Dialog open={open} onOpenChange={(v) => { if (!v) closeDialog() }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? 'Edit Life Area' : 'New Life Area'}</DialogTitle>
+            <DialogTitle>{editing ? 'Edit Life Aspect' : 'New Life Aspect'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
             <div className="space-y-1.5">
@@ -259,7 +260,7 @@ export default function LifeAreasPage() {
 
             <div className="space-y-1.5">
               <Label>Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
-              <Textarea {...register('description')} placeholder="What does this life area cover?" rows={2} />
+              <Textarea {...register('description')} placeholder="What does this life aspect cover?" rows={2} />
             </div>
 
             <div className="flex gap-3 justify-end pt-2">

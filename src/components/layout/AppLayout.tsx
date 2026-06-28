@@ -31,7 +31,7 @@ export default function AppLayout() {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       <Navbar onMenuClick={() => setSidebarOpen((p) => !p)} />
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative gap-3 p-3 bg-zinc-100 dark:bg-zinc-900">
 
         {/* Mobile backdrop */}
         {sidebarOpen && (
@@ -42,7 +42,7 @@ export default function AppLayout() {
         )}
 
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 overflow-y-auto bg-zinc-50">
+        <main className="flex-1 overflow-y-auto bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
           <Outlet />
         </main>
       </div>

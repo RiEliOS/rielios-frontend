@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, PiggyBank, Target, MoreVertical, ListPlus, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, Target, MoreVertical, ListPlus, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
+import savingsIcon from '@/assets/savings.png'
+import targetsIcon from '@/assets/targets.png'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -67,10 +69,10 @@ const depositSchema = z.object({
 type DepositForm = z.infer<typeof depositSchema>
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-blue-100 text-blue-700',
-  completed: 'bg-green-100 text-green-700',
-  paused: 'bg-gray-100 text-gray-700',
-  cancelled: 'bg-red-100 text-red-500',
+  active: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
+  completed: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
+  paused: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  cancelled: 'bg-red-100 dark:bg-red-900/40 text-red-500 dark:text-red-400',
 }
 
 const today = new Date().toISOString().split('T')[0]
@@ -137,20 +139,20 @@ export default function SavingsPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: FormData) => api.post('/savings', toPayload(data)),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['savings'] }); closeDialog(); toast.success('Saving goal created') },
-    onError: () => toast.error('Failed to create saving goal'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['savings'] }); closeDialog(); toast.success('Saving created') },
+    onError: () => toast.error('Failed to create saving'),
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: FormData }) => api.patch(`/savings/${id}`, toPayload(data)),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['savings'] }); closeDialog(); toast.success('Saving goal updated') },
-    onError: () => toast.error('Failed to update saving goal'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['savings'] }); closeDialog(); toast.success('Saving updated') },
+    onError: () => toast.error('Failed to update saving'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/savings/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['savings'] }); setConfirmId(null); toast.success('Saving goal deleted') },
-    onError: () => toast.error('Failed to delete saving goal'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['savings'] }); setConfirmId(null); toast.success('Saving deleted') },
+    onError: () => toast.error('Failed to delete saving'),
   })
 
   const addDepositMutation = useMutation({
@@ -214,21 +216,21 @@ export default function SavingsPage() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-900">Savings</h1>
-          <p className="text-sm text-zinc-500 mt-1">Build your financial safety net</p>
+          <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">Savings</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Build your financial safety net</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />New Goal</Button>
+        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />New Saving</Button>
       </div>
 
       {goals.length > 0 && (
         <div className="flex gap-4">
-          <div className="rounded-2xl bg-blue-50 border border-blue-200 px-4 py-2.5">
-            <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide">Total Saved</p>
-            <p className="text-xl font-black text-blue-700">{fmt(totalSaved.toFixed(2))}</p>
+          <div className="rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 px-4 py-2.5">
+            <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide">Total Saved</p>
+            <p className="text-xl font-black text-blue-700 dark:text-blue-400">{fmt(totalSaved.toFixed(2))}</p>
           </div>
-          <div className="rounded-2xl bg-zinc-50 border border-zinc-200 px-4 py-2.5">
-            <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wide">Total Target</p>
-            <p className="text-xl font-black text-zinc-700">{fmt(totalTarget.toFixed(2))}</p>
+          <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-4 py-2.5">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold uppercase tracking-wide">Total Target</p>
+            <p className="text-xl font-black text-zinc-700 dark:text-zinc-300">{fmt(totalTarget.toFixed(2))}</p>
           </div>
         </div>
       )}
@@ -236,14 +238,14 @@ export default function SavingsPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-zinc-200 h-36 animate-pulse" />
+            <div key={i} className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 h-36 animate-pulse" />
           ))}
         </div>
       ) : goals.length === 0 ? (
         <EmptyState
-          icon={PiggyBank}
-          title="No savings goals yet"
-          description="Create your first savings goal to start building wealth."
+          icon={savingsIcon}
+          title="No savings yet"
+          description="Create your first saving to start building wealth."
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -251,12 +253,12 @@ export default function SavingsPage() {
             const pct = Math.min((parseFloat(goal.savedAmount) / parseFloat(goal.targetAmount)) * 100, 100)
             const linkedGoal = getGoalTitle(goal.personalGoalId)
             return (
-              <div key={goal.id} className="bg-white rounded-2xl border border-zinc-200 p-4 space-y-3">
+              <div key={goal.id} className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLORS[goal.status] ?? 'bg-gray-100 text-gray-700'}`}>
                     {goal.status}
                   </span>
-                  <p className="font-semibold text-sm text-zinc-800 flex-1 min-w-0 truncate">{goal.name}</p>
+                  <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-200 flex-1 min-w-0 truncate">{goal.name}</p>
                   <DropdownMenuPrimitive.Root>
                     <DropdownMenuPrimitive.Trigger asChild>
                       <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
@@ -296,20 +298,20 @@ export default function SavingsPage() {
                   </DropdownMenuPrimitive.Root>
                 </div>
                 {goal.description && (
-                  <p className="text-sm text-zinc-500">{goal.description}</p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{goal.description}</p>
                 )}
                 {linkedGoal && (
-                  <div className="flex items-center gap-1 text-xs text-blue-600">
-                    <Target className="h-3 w-3" />
+                  <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                    <img src={targetsIcon} alt="" className="h-3.5 w-3.5 object-contain mix-blend-multiply dark:mix-blend-normal" />
                     <span>{linkedGoal}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold text-zinc-800">{fmt(goal.savedAmount)}</span>
-                  <span className="text-zinc-400">of {fmt(goal.targetAmount)}</span>
+                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">{fmt(goal.savedAmount)}</span>
+                  <span className="text-zinc-400 dark:text-zinc-500">of {fmt(goal.targetAmount)}</span>
                 </div>
                 <Progress value={pct} className="h-2" />
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-zinc-400 dark:text-zinc-500">
                   {pct.toFixed(0)}% complete
                   {goal.deadline && ` · Due ${fmtDate(goal.deadline)}`}
                 </p>
@@ -321,8 +323,8 @@ export default function SavingsPage() {
 
       <ConfirmDialog
         open={!!confirmId}
-        title="Delete saving goal?"
-        description="This will permanently remove this saving goal and all its deposits."
+        title="Delete saving?"
+        description="This will permanently remove this saving and all its deposits."
         onConfirm={() => deleteMutation.mutate(confirmId!)}
         onCancel={() => setConfirmId(null)}
         isPending={deleteMutation.isPending}
@@ -332,7 +334,7 @@ export default function SavingsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? 'Edit Saving Goal' : 'New Saving Goal'}</DialogTitle>
+            <DialogTitle>{editing ? 'Edit Saving' : 'New Saving'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
             <div className="space-y-1.5">
@@ -347,7 +349,7 @@ export default function SavingsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Linked Goal <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Label>Target <span className="text-muted-foreground text-xs">(optional)</span></Label>
               <Controller
                 name="personalGoalId"
                 control={control}
@@ -469,10 +471,10 @@ export default function SavingsPage() {
                     Withdrawn: {fmt(totalWithdrawn.toFixed(2))}
                   </span>
                 )}
-                <span className="text-zinc-600 font-semibold">
+                <span className="text-zinc-600 dark:text-zinc-300 font-semibold">
                   Net saved: {fmt((totalDeposited - totalWithdrawn).toFixed(2))}
                   {depositsGoal && (
-                    <span className="text-zinc-400 font-normal ml-1">
+                    <span className="text-zinc-400 dark:text-zinc-500 font-normal ml-1">
                       / {fmt(depositsGoal.targetAmount)}
                     </span>
                   )}
@@ -500,7 +502,7 @@ export default function SavingsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-zinc-400">{fmtDate(d.depositDate)}</span>
+                      <span className="text-xs text-zinc-400 dark:text-zinc-500">{fmtDate(d.depositDate)}</span>
                       <span className="font-medium tabular-nums">{fmt(d.amount)}</span>
                       <Button
                         variant="ghost"

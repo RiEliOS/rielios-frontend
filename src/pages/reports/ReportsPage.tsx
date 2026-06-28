@@ -1,5 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { FileText, Target, BarChart3, Layers, ArrowRight, Wallet, AlertTriangle, CheckCircle2, PiggyBank } from 'lucide-react'
+import { ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import cashIcon from '@/assets/cash.png'
+import financeIcon from '@/assets/finance.png'
+import targetsIcon from '@/assets/targets.png'
+import investmentIcon from '@/assets/investment.png'
+import savingsIcon from '@/assets/savings.png'
+import lifeAspectsIcon from '@/assets/lifeaspects.png'
 import { Progress } from '@/components/ui/progress'
 import { api } from '@/services/api'
 import { useMonthStore } from '@/store/month.store'
@@ -83,10 +89,10 @@ function StatRow({ label, value, color, sub }: { label: string; value: string; c
   return (
     <div className="flex justify-between items-center py-1.5">
       <div>
-        <span className="text-zinc-500 text-sm">{label}</span>
-        {sub && <p className="text-[10px] text-zinc-400">{sub}</p>}
+        <span className="text-zinc-500 dark:text-zinc-400 text-sm">{label}</span>
+        {sub && <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{sub}</p>}
       </div>
-      <span className={`font-semibold text-sm tabular-nums ${color ?? 'text-zinc-800'}`}>{value}</span>
+      <span className={`font-semibold text-sm tabular-nums ${color ?? 'text-zinc-800 dark:text-zinc-200'}`}>{value}</span>
     </div>
   )
 }
@@ -94,9 +100,9 @@ function StatRow({ label, value, color, sub }: { label: string; value: string; c
 function SectionDivider({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 py-1">
-      <div className="h-px flex-1 bg-zinc-100" />
-      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">{label}</span>
-      <div className="h-px flex-1 bg-zinc-100" />
+      <div className="h-px flex-1 bg-zinc-100 dark:bg-zinc-700/50" />
+      <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">{label}</span>
+      <div className="h-px flex-1 bg-zinc-100 dark:bg-zinc-700/50" />
     </div>
   )
 }
@@ -105,7 +111,7 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-2 mt-1">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="h-6 animate-pulse bg-zinc-100 rounded-lg" />
+        <div key={i} className="h-6 animate-pulse bg-zinc-100 dark:bg-zinc-700 rounded-lg" />
       ))}
     </div>
   )
@@ -158,22 +164,22 @@ export default function ReportsPage() {
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-black tracking-tight text-zinc-900">Reports</h1>
-        <p className="text-sm text-zinc-500 mt-1">Analytics and insights for <span className="font-semibold text-zinc-700">{monthLabel()}</span></p>
+        <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">Reports</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Analytics and insights for <span className="font-semibold text-zinc-700 dark:text-zinc-300">{monthLabel()}</span></p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 
         {/* Finance Summary */}
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5">
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5">
           <div className="flex items-center gap-2 mb-1">
-            <FileText className="h-5 w-5 text-primary" />
-            <p className="font-bold text-zinc-800">Finance Summary</p>
+            <img src={financeIcon} alt="Finance" className="h-6 w-6 object-contain mix-blend-multiply dark:mix-blend-normal" />
+            <p className="font-bold text-zinc-800 dark:text-zinc-200">Finance Summary</p>
           </div>
-          <p className="text-xs text-zinc-400 mb-4">Financial overview for {monthLabel()}</p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">Financial overview for {monthLabel()}</p>
           {loadingFinance ? <LoadingSkeleton /> : (
             <div>
-              <div className="divide-y divide-zinc-100">
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-700/50">
                 <SectionDivider label="Income & Expenses" />
                 <StatRow label="Total Income" value={fmt(finance?.income.total ?? 0)} color="text-green-600" />
                 <StatRow label="Total Expenses" value={fmt(finance?.expenses.total ?? 0)} color="text-red-500" />
@@ -243,8 +249,8 @@ export default function ReportsPage() {
                       return (
                         <div key={i}>
                           <div className="flex justify-between text-xs mb-0.5">
-                            <span className="text-zinc-700">{c.categoryName ?? 'Uncategorized'}</span>
-                            <span className="text-zinc-500">{fmt(parseFloat(c.total))}</span>
+                            <span className="text-zinc-700 dark:text-zinc-300">{c.categoryName ?? 'Uncategorized'}</span>
+                            <span className="text-zinc-500 dark:text-zinc-400">{fmt(parseFloat(c.total))}</span>
                           </div>
                           <Progress value={pct} className="h-1.5" />
                         </div>
@@ -258,15 +264,15 @@ export default function ReportsPage() {
         </div>
 
         {/* Goals Summary */}
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5">
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5">
           <div className="flex items-center gap-2 mb-1">
-            <Target className="h-5 w-5 text-primary" />
-            <p className="font-bold text-zinc-800">Targets Summary</p>
+            <img src={targetsIcon} alt="Targets" className="h-6 w-6 object-contain mix-blend-multiply dark:mix-blend-normal" />
+            <p className="font-bold text-zinc-800 dark:text-zinc-200">Targets Summary</p>
           </div>
-          <p className="text-xs text-zinc-400 mb-4">Personal target progress</p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">Personal target progress</p>
           {loadingGoals ? <LoadingSkeleton /> : (
             <div>
-              <p className="text-2xl font-black text-zinc-800 mb-3">{goals?.total ?? 0} <span className="text-base font-normal text-zinc-400">targets</span></p>
+              <p className="text-2xl font-black text-zinc-800 dark:text-zinc-200 mb-3">{goals?.total ?? 0} <span className="text-base font-normal text-zinc-400 dark:text-zinc-500">targets</span></p>
               <div className="space-y-2">
                 {goalStatuses.map((s) => {
                   const count = goals?.byStatus[s] ?? 0
@@ -274,8 +280,8 @@ export default function ReportsPage() {
                   return (
                     <div key={s}>
                       <div className="flex justify-between text-xs mb-0.5">
-                        <span className="capitalize text-zinc-700">{s}</span>
-                        <span className="text-zinc-500">{count}</span>
+                        <span className="capitalize text-zinc-700 dark:text-zinc-300">{s}</span>
+                        <span className="text-zinc-500 dark:text-zinc-400">{count}</span>
                       </div>
                       <Progress value={(count / total) * 100} className="h-1.5" />
                     </div>
@@ -287,12 +293,12 @@ export default function ReportsPage() {
         </div>
 
         {/* Investments Summary */}
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5">
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5">
           <div className="flex items-center gap-2 mb-1">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            <p className="font-bold text-zinc-800">Investments Summary</p>
+            <img src={investmentIcon} alt="Investments" className="h-6 w-6 object-contain mix-blend-multiply dark:mix-blend-normal" />
+            <p className="font-bold text-zinc-800 dark:text-zinc-200">Investments Summary</p>
           </div>
-          <p className="text-xs text-zinc-400 mb-4">
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">
             Portfolio overview · {inv?.total ?? 0} total
             {(inv?.activeCount ?? 0) > 0 && ` · ${inv?.activeCount} active`}
             {(inv?.completedCount ?? 0) > 0 && ` · ${inv?.completedCount} closed`}
@@ -324,14 +330,14 @@ export default function ReportsPage() {
                 if (!budget) return null
                 const isProfit = overallPnl > 0
                 const isLoss = overallPnl < 0
-                if (overBudget  && isProfit) return { text: 'Over budget · Profit',   cls: 'bg-yellow-100 text-yellow-700 border-yellow-200' }
-                if (overBudget  && isLoss)   return { text: 'Over budget · Loss',      cls: 'bg-red-100 text-red-600 border-red-200' }
-                if (overBudget)              return { text: 'Over budget · Even',      cls: 'bg-yellow-100 text-yellow-700 border-yellow-200' }
-                if (underBudget && isProfit) return { text: 'Under budget · Profit',  cls: 'bg-green-100 text-green-700 border-green-200' }
-                if (underBudget && isLoss)   return { text: 'Under budget · Loss',    cls: 'bg-orange-100 text-orange-700 border-orange-200' }
-                if (underBudget)             return { text: 'Under budget · Even',    cls: 'bg-blue-100 text-blue-700 border-blue-200' }
-                if (isProfit)                return { text: 'On budget · Profit',      cls: 'bg-green-100 text-green-700 border-green-200' }
-                if (isLoss)                  return { text: 'On budget · Loss',        cls: 'bg-red-100 text-red-600 border-red-200' }
+                if (overBudget  && isProfit) return { text: 'Over budget · Profit',   cls: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/40' }
+                if (overBudget  && isLoss)   return { text: 'Over budget · Loss',      cls: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/40' }
+                if (overBudget)              return { text: 'Over budget · Even',      cls: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/40' }
+                if (underBudget && isProfit) return { text: 'Under budget · Profit',  cls: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800/40' }
+                if (underBudget && isLoss)   return { text: 'Under budget · Loss',    cls: 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/40' }
+                if (underBudget)             return { text: 'Under budget · Even',    cls: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/40' }
+                if (isProfit)                return { text: 'On budget · Profit',      cls: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800/40' }
+                if (isLoss)                  return { text: 'On budget · Loss',        cls: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/40' }
                 return                              { text: 'On budget · Even',        cls: 'bg-muted text-muted-foreground border-border' }
               })()
 
@@ -444,7 +450,7 @@ export default function ReportsPage() {
                   {totalOut > 0 && (
                     <div className={cn(
                       'rounded-lg border px-4 py-3 flex items-center justify-between',
-                      overallPnl > 0 ? 'bg-green-50 border-green-200' : overallPnl < 0 ? 'bg-red-50 border-red-200' : 'bg-muted/30',
+                      overallPnl > 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/40' : overallPnl < 0 ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40' : 'bg-muted/30',
                     )}>
                       <div>
                         <p className="text-xs text-muted-foreground font-medium">Overall P&L</p>
@@ -491,31 +497,31 @@ export default function ReportsPage() {
         </div>
 
         {/* Savings Summary */}
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5">
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5">
           <div className="flex items-center gap-2 mb-1">
-            <PiggyBank className="h-5 w-5 text-primary" />
-            <p className="font-bold text-zinc-800">Savings Summary</p>
+            <img src={savingsIcon} alt="Savings" className="h-6 w-6 object-contain mix-blend-multiply dark:mix-blend-normal" />
+            <p className="font-bold text-zinc-800 dark:text-zinc-200">Savings Summary</p>
           </div>
-          <p className="text-xs text-zinc-400 mb-4">All saving goals overview</p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">All saving goals overview</p>
           {loadingSavings ? <LoadingSkeleton /> : savings?.total === 0 ? (
-            <p className="text-sm text-zinc-400 py-2">No saving goals yet.</p>
+            <p className="text-sm text-zinc-400 dark:text-zinc-500 py-2">No saving goals yet.</p>
           ) : (
             <div className="space-y-4">
               {/* Overall progress */}
               <div>
                 <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-zinc-500">Overall Progress</span>
-                  <span className="font-semibold text-zinc-700">
+                  <span className="text-zinc-500 dark:text-zinc-400">Overall Progress</span>
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">
                     {fmt(savings?.totalSaved ?? 0)}
-                    <span className="text-zinc-400"> / {fmt(savings?.totalTarget ?? 0)}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500"> / {fmt(savings?.totalTarget ?? 0)}</span>
                   </span>
                 </div>
                 <Progress value={savings?.overallPct ?? 0} className="h-2" />
-                <p className="text-xs text-zinc-400 mt-1">{savings?.overallPct ?? 0}% of total target</p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{savings?.overallPct ?? 0}% of total target</p>
               </div>
 
               {/* Flow stats */}
-              <div className="divide-y divide-zinc-100">
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-700">
                 <StatRow label="Total Deposited" value={fmt(savings?.totalDeposited ?? 0)} color="text-teal-600" />
                 {(savings?.totalWithdrawn ?? 0) > 0 && (
                   <StatRow label="Total Withdrawn" value={fmt(savings?.totalWithdrawn ?? 0)} color="text-zinc-500" />
@@ -530,21 +536,21 @@ export default function ReportsPage() {
 
               {/* Status breakdown */}
               <div>
-                <p className="text-xs font-medium text-zinc-400 mb-2">By Status</p>
+                <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 mb-2">By Status</p>
                 <div className="space-y-1.5">
                   {['active', 'completed', 'cancelled'].map((s) => {
                     const count = savings?.byStatus[s] ?? 0
                     const total = savings?.total || 1
                     return (
                       <div key={s} className="flex items-center gap-2">
-                        <span className="text-xs text-zinc-500 capitalize w-16">{s}</span>
-                        <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400 capitalize w-16">{s}</span>
+                        <div className="flex-1 h-1.5 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
                           <div
-                            className={cn('h-full rounded-full', s === 'active' ? 'bg-teal-500' : s === 'completed' ? 'bg-green-500' : 'bg-zinc-300')}
+                            className={cn('h-full rounded-full', s === 'active' ? 'bg-teal-500' : s === 'completed' ? 'bg-green-500' : 'bg-zinc-300 dark:bg-zinc-500')}
                             style={{ width: `${(count / total) * 100}%` }}
                           />
                         </div>
-                        <span className="text-xs text-zinc-400 w-4 text-right">{count}</span>
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500 w-4 text-right">{count}</span>
                       </div>
                     )
                   })}
@@ -553,22 +559,22 @@ export default function ReportsPage() {
 
               {/* Per-goal list */}
               {(savings?.goals ?? []).length > 0 && (
-                <div className="space-y-2.5 border-t border-zinc-100 pt-3">
-                  <p className="text-xs font-medium text-zinc-400">Goals</p>
+                <div className="space-y-2.5 border-t border-zinc-100 dark:border-zinc-700 pt-3">
+                  <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500">Goals</p>
                   {savings?.goals.map((g) => (
                     <div key={g.id}>
                       <div className="flex justify-between text-xs mb-1">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="font-medium text-zinc-700 truncate">{g.name}</span>
+                          <span className="font-medium text-zinc-700 dark:text-zinc-300 truncate">{g.name}</span>
                           <span className={cn(
                             'text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0',
-                            g.status === 'active' ? 'bg-teal-100 text-teal-700' :
-                            g.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-500',
+                            g.status === 'active' ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-400' :
+                            g.status === 'completed' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400',
                           )}>
                             {g.status}
                           </span>
                         </div>
-                        <span className="text-zinc-400 shrink-0 ml-2">{g.pct}%</span>
+                        <span className="text-zinc-400 dark:text-zinc-500 shrink-0 ml-2">{g.pct}%</span>
                       </div>
                       <Progress value={g.pct} className="h-1.5" />
                     </div>
@@ -579,40 +585,40 @@ export default function ReportsPage() {
           )}
         </div>
 
-        {/* Life Areas */}
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5">
+        {/* Life Aspects */}
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5">
           <div className="flex items-center gap-2 mb-1">
-            <Layers className="h-5 w-5 text-primary" />
-            <p className="font-bold text-zinc-800">Life Areas</p>
+            <img src={lifeAspectsIcon} alt="Life Aspects" className="h-6 w-6 object-contain mix-blend-multiply dark:mix-blend-normal" />
+            <p className="font-bold text-zinc-800 dark:text-zinc-200">Life Aspects</p>
           </div>
-          <p className="text-xs text-zinc-400 mb-4">Goals and investments organised by life pillar</p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">Goals and investments organised by life aspect</p>
           {loadingAreas ? <LoadingSkeleton /> : !areas || areas.total === 0 ? (
-            <p className="text-sm text-zinc-400 py-2">No life areas defined yet.</p>
+            <p className="text-sm text-zinc-400 dark:text-zinc-500 py-2">No life aspects defined yet.</p>
           ) : (
             <div className="space-y-3">
               {areas.lifeAreas.map((area) => (
-                <div key={area.id} className="flex items-start gap-3 py-2 border-b border-zinc-50 last:border-0">
+                <div key={area.id} className="flex items-start gap-3 py-2 border-b border-zinc-50 dark:border-zinc-700 last:border-0">
                   <div
                     className="h-3 w-3 rounded-full mt-1 shrink-0"
                     style={{ backgroundColor: area.color ?? '#94a3b8' }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-zinc-800 truncate">{area.name}</p>
+                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">{area.name}</p>
                     <div className="flex gap-3 mt-0.5">
-                      <span className="text-xs text-zinc-500">
-                        <span className="font-medium text-zinc-700">{area.goals.total}</span> goal{area.goals.total !== 1 ? 's' : ''}
-                        {area.goals.active > 0 && <span className="text-teal-600"> ({area.goals.active} active)</span>}
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="font-medium text-zinc-700 dark:text-zinc-300">{area.goals.total}</span> goal{area.goals.total !== 1 ? 's' : ''}
+                        {area.goals.active > 0 && <span className="text-teal-600 dark:text-teal-400"> ({area.goals.active} active)</span>}
                       </span>
-                      <span className="text-xs text-zinc-500">
-                        <span className="font-medium text-zinc-700">{area.investments.total}</span> investment{area.investments.total !== 1 ? 's' : ''}
-                        {area.investments.active > 0 && <span className="text-blue-600"> ({area.investments.active} active)</span>}
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="font-medium text-zinc-700 dark:text-zinc-300">{area.investments.total}</span> investment{area.investments.total !== 1 ? 's' : ''}
+                        {area.investments.active > 0 && <span className="text-blue-600 dark:text-blue-400"> ({area.investments.active} active)</span>}
                       </span>
                     </div>
                   </div>
                 </div>
               ))}
               {(areas.unlinkedGoals > 0 || areas.unlinkedInvs > 0) && (
-                <p className="text-xs text-zinc-400 pt-1">
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 pt-1">
                   {areas.unlinkedGoals > 0 && <span>{areas.unlinkedGoals} goal{areas.unlinkedGoals !== 1 ? 's' : ''} not linked to any area. </span>}
                   {areas.unlinkedInvs > 0 && <span>{areas.unlinkedInvs} investment{areas.unlinkedInvs !== 1 ? 's' : ''} not linked to any area.</span>}
                 </p>
@@ -622,49 +628,49 @@ export default function ReportsPage() {
         </div>
 
         {/* Budget Performance */}
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5 md:col-span-2">
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5 md:col-span-2">
           <div className="flex items-center gap-2 mb-1">
-            <Wallet className="h-5 w-5 text-primary" />
-            <p className="font-bold text-zinc-800">Budget Performance</p>
+            <img src={cashIcon} alt="Budget" className="h-6 w-6 object-contain mix-blend-multiply dark:mix-blend-normal" />
+            <p className="font-bold text-zinc-800 dark:text-zinc-200">Budget Performance</p>
           </div>
-          <p className="text-xs text-zinc-400 mb-4">Planned vs actual spend across all budget periods</p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">Planned vs actual spend across all budget periods</p>
           {loadingBudgets ? <LoadingSkeleton /> : !budgetReport || budgetReport.total === 0 ? (
-            <p className="text-sm text-zinc-400 py-2">No budgets set yet.</p>
+            <p className="text-sm text-zinc-400 dark:text-zinc-500 py-2">No budgets set yet.</p>
           ) : (
             <div className="space-y-5">
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { label: 'Total Planned', val: fmt(budgetReport.totalPlanned), color: 'text-zinc-900' },
-                  { label: 'Total Spent', val: fmt(budgetReport.totalSpent), color: budgetReport.totalSpent > budgetReport.totalPlanned ? 'text-red-600' : 'text-zinc-900' },
+                  { label: 'Total Planned', val: fmt(budgetReport.totalPlanned), color: 'text-zinc-900 dark:text-zinc-100' },
+                  { label: 'Total Spent', val: fmt(budgetReport.totalSpent), color: budgetReport.totalSpent > budgetReport.totalPlanned ? 'text-red-600' : 'text-zinc-900 dark:text-zinc-100' },
                   {
                     label: budgetReport.totalVariance >= 0 ? 'Under budget' : 'Over budget',
                     val: fmt(Math.abs(budgetReport.totalVariance)),
                     color: budgetReport.totalVariance >= 0 ? 'text-green-600' : 'text-red-600',
                   },
                 ].map((s) => (
-                  <div key={s.label} className="bg-zinc-50 rounded-xl p-3">
-                    <p className="text-xs text-zinc-500 mb-0.5">{s.label}</p>
+                  <div key={s.label} className="bg-zinc-50 dark:bg-zinc-700/50 rounded-xl p-3">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">{s.label}</p>
                     <p className={cn('text-base font-bold', s.color)}>{s.val}</p>
                   </div>
                 ))}
               </div>
 
               {budgetReport.overCount > 0 ? (
-                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl px-3 py-2">
                   <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
-                  <p className="text-xs text-red-700 font-medium">
+                  <p className="text-xs text-red-700 dark:text-red-400 font-medium">
                     {budgetReport.overCount} budget{budgetReport.overCount > 1 ? 's' : ''} exceeded across all periods
                   </p>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-xl px-3 py-2">
                   <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                  <p className="text-xs text-green-700 font-medium">All budgets are within planned limits</p>
+                  <p className="text-xs text-green-700 dark:text-green-400 font-medium">All budgets are within planned limits</p>
                 </div>
               )}
 
               <div className="space-y-2">
-                <div className="grid grid-cols-5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wide px-1 pb-1 border-b">
+                <div className="grid grid-cols-5 text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide px-1 pb-1 border-b dark:border-zinc-700">
                   <span className="col-span-2">Category</span>
                   <span className="text-right">Planned</span>
                   <span className="text-right">Spent</span>
@@ -673,27 +679,27 @@ export default function ReportsPage() {
                 {budgetReport.items.map((b) => (
                   <div key={b.id} className={cn(
                     'grid grid-cols-5 items-center px-1 py-1.5 rounded-lg text-sm',
-                    b.isOver ? 'bg-red-50' : b.usedPct >= 80 ? 'bg-amber-50' : '',
+                    b.isOver ? 'bg-red-50 dark:bg-red-900/20' : b.usedPct >= 80 ? 'bg-amber-50 dark:bg-amber-900/20' : '',
                   )}>
-                    <span className="col-span-2 font-medium text-zinc-700 truncate text-xs">
+                    <span className="col-span-2 font-medium text-zinc-700 dark:text-zinc-300 truncate text-xs">
                       {b.categoryName}
-                      <span className="text-zinc-400 font-normal ml-1 text-[10px]">
+                      <span className="text-zinc-400 dark:text-zinc-500 font-normal ml-1 text-[10px]">
                         {b.month}/{b.year}
                       </span>
                     </span>
-                    <span className="text-right text-xs text-zinc-500">{fmt(parseFloat(b.plannedBudget))}</span>
-                    <span className={cn('text-right text-xs font-semibold', b.isOver ? 'text-red-600' : 'text-zinc-700')}>
+                    <span className="text-right text-xs text-zinc-500 dark:text-zinc-400">{fmt(parseFloat(b.plannedBudget))}</span>
+                    <span className={cn('text-right text-xs font-semibold', b.isOver ? 'text-red-600' : 'text-zinc-700 dark:text-zinc-300')}>
                       {fmt(parseFloat(b.actualSpent))}
                     </span>
                     <span className="text-right">
                       {b.isOver ? (
-                        <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold">
+                        <span className="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded-full font-bold">
                           +{fmt(parseFloat(b.overage))}
                         </span>
                       ) : (
                         <span className={cn(
                           'text-[10px] px-1.5 py-0.5 rounded-full font-semibold',
-                          b.usedPct >= 80 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700',
+                          b.usedPct >= 80 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400' : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
                         )}>
                           {b.usedPct}%
                         </span>

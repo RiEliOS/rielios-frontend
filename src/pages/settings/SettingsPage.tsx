@@ -1,21 +1,26 @@
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Sun, Moon, Monitor, Camera } from 'lucide-react'
+import {
+  Loader2, Sun, Moon, Monitor, Camera,
+  User, SlidersHorizontal, ShieldCheck,
+} from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 import { api } from '@/services/api'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/store/auth.store'
 import { useMe } from '@/hooks/useAuth'
 import { useDateFormat } from '@/hooks/useDateFormat'
 import { cn } from '@/lib/utils'
+
+// ── Constants ────────────────────────────────────────────────────────────────
 
 const CURRENCIES = [
   { code: 'USD', name: 'US Dollar' },
@@ -48,6 +53,31 @@ const TIMEZONES = [
   'Pacific/Auckland',
 ]
 
+const NAV_SECTIONS = [
+  {
+    id: 'profile' as const,
+    icon: User,
+    label: 'Profile',
+    description: 'Personal info & avatar',
+  },
+  {
+    id: 'preferences' as const,
+    icon: SlidersHorizontal,
+    label: 'Preferences',
+    description: 'Currency, timezone & theme',
+  },
+  {
+    id: 'security' as const,
+    icon: ShieldCheck,
+    label: 'Security',
+    description: 'Password & account',
+  },
+]
+
+type SectionId = (typeof NAV_SECTIONS)[number]['id']
+
+// ── Schemas ──────────────────────────────────────────────────────────────────
+
 const profileSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
   phone: z.string().optional(),
@@ -74,7 +104,39 @@ type ProfileData = z.infer<typeof profileSchema>
 type PrefsData = z.infer<typeof prefsSchema>
 type PasswordData = z.infer<typeof passwordSchema>
 
+// ── Field wrapper ─────────────────────────────────────────────────────────────
+
+function Field({
+  label,
+  hint,
+  error,
+  children,
+}: {
+  label: string
+  hint?: string
+  error?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <Label className="text-sm font-medium text-zinc-700">{label}</Label>
+        {hint && <span className="text-xs text-zinc-400">{hint}</span>}
+      </div>
+      {children}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  )
+}
+
+// ── Section card ──────────────────────────────────────────────────────────────
+
+
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function SettingsPage() {
+  const [active, setActive] = useState<SectionId>('profile')
   const qc = useQueryClient()
   const { user, setAuth } = useAuthStore()
   const { data: me } = useMe()
@@ -145,66 +207,117 @@ export default function SettingsPage() {
   })
 
   const initials = me?.profile?.fullName
-    ? (me.profile.fullName as string)
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
+    ? me.profile.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : user?.email?.[0]?.toUpperCase() ?? '?'
 
-  const formatDate = (iso: string) => fmtDate(iso, { month: 'long' })
-
   return (
-    <div className="p-6 lg:p-8 max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-zinc-900">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your account and preferences</p>
-      </div>
+    <div className="p-6 h-full">
+      <div className="flex h-full bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden shadow-sm">
 
-      <Tabs defaultValue="profile">
-        <TabsList className="mb-6">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
+      {/* ── Left nav ─────────────────────────────────────────────────────── */}
+      <aside className="w-64 shrink-0 border-r border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex flex-col">
+        <div className="px-6 py-6 border-b border-zinc-100 dark:border-zinc-700">
+          <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Settings</h1>
+          <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-0.5">Manage your account and preferences</p>
+        </div>
 
-        {/* ── Profile ── */}
-        <TabsContent value="profile">
-          <div className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-6">
-            <div>
-              <p className="text-base font-bold text-zinc-800">Profile</p>
-              <p className="text-sm text-zinc-400">Your personal information</p>
-            </div>
-            <div className="flex items-center gap-4 pb-6 border-b border-zinc-100">
-              <div className="relative shrink-0">
-                {me?.profile?.avatarUrl ? (
-                  <img
-                    src={me.profile.avatarUrl}
-                    alt="Avatar"
-                    className="h-16 w-16 rounded-2xl object-cover border-2 border-primary/20"
-                  />
-                ) : (
-                  <div className="h-16 w-16 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center">
-                    <span className="text-xl font-bold text-primary">{initials}</span>
-                  </div>
+        <nav className="p-3 space-y-0.5 flex-1">
+          {NAV_SECTIONS.map(({ id, icon: Icon, label, description }) => (
+            <button
+              key={id}
+              onClick={() => setActive(id)}
+              className={cn(
+                'w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors group',
+                active === id
+                  ? 'bg-primary/5 text-primary'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-100',
+              )}
+            >
+              <div
+                className={cn(
+                  'h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+                  active === id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-600',
                 )}
-                <button
-                  type="button"
-                  onClick={() => avatarInputRef.current?.click()}
-                  disabled={avatarMutation.isPending}
-                  className="absolute -bottom-1.5 -right-1.5 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow hover:bg-primary/90 transition-colors"
-                >
-                  {avatarMutation.isPending ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Camera className="h-3 w-3" />
-                  )}
-                </button>
+              >
+                <Icon className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className={cn('text-sm font-medium leading-none', active === id ? 'text-primary' : 'text-zinc-800 dark:text-zinc-200')}>
+                  {label}
+                </p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 truncate">{description}</p>
+              </div>
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      {/* ── Right content ─────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl pl-2 pr-8 py-6 space-y-5">
+
+          {/* ── Profile ── */}
+          {active === 'profile' && (
+            <div className="space-y-8">
+              {/* Avatar */}
+              <div className="space-y-4">
+                <div>
+                  <p className="font-semibold text-zinc-900 dark:text-zinc-100">Your photo</p>
+                  <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-0.5">Displayed on your profile and in the navigation bar</p>
+                </div>
+                <div className="flex items-center gap-5">
+                  <div
+                    className="relative group/av shrink-0 cursor-pointer"
+                    onClick={() => !avatarMutation.isPending && avatarInputRef.current?.click()}
+                  >
+                    {me?.profile?.avatarUrl ? (
+                      <img
+                        src={me.profile.avatarUrl}
+                        alt="Avatar"
+                        className="h-20 w-20 rounded-2xl object-cover ring-2 ring-zinc-200"
+                      />
+                    ) : (
+                      <div className="h-20 w-20 rounded-2xl bg-primary/10 ring-2 ring-primary/20 flex items-center justify-center">
+                        <span className="text-2xl font-bold text-primary">{initials}</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 rounded-2xl bg-black/50 flex items-center justify-center opacity-0 group-hover/av:opacity-100 transition-opacity">
+                      {avatarMutation.isPending
+                        ? <Loader2 className="h-5 w-5 text-white animate-spin" />
+                        : <Camera className="h-5 w-5 text-white" />
+                      }
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                      {me?.profile?.fullName ?? user?.email}
+                    </p>
+                    <p className="text-sm text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{user?.email}</p>
+                    {user?.createdAt && (
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+                        Member since {fmtDate(user.createdAt, { month: 'long' })}
+                      </p>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 h-8 text-xs"
+                      disabled={avatarMutation.isPending}
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      {avatarMutation.isPending
+                        ? <><Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> Uploading…</>
+                        : <><Camera className="mr-1.5 h-3 w-3" /> Change photo</>
+                      }
+                    </Button>
+                  </div>
+                </div>
                 <input
                   ref={avatarInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  accept="image/jpeg,image/png,image/webp"
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0]
@@ -213,201 +326,180 @@ export default function SettingsPage() {
                   }}
                 />
               </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-zinc-800 truncate">{me?.profile?.fullName ?? user?.email}</p>
-                <p className="text-sm text-zinc-400 truncate">{user?.email}</p>
-                {user?.createdAt && (
-                  <p className="text-xs text-zinc-400 mt-0.5">
-                    Member since {formatDate(user.createdAt)}
-                  </p>
-                )}
+
+              <Separator />
+
+              {/* Personal info */}
+              <div className="space-y-4">
+                <div>
+                  <p className="font-semibold text-zinc-900 dark:text-zinc-100">Personal information</p>
+                  <p className="text-sm text-zinc-400 mt-0.5">Update your name and contact details</p>
+                </div>
+                <form
+                  onSubmit={profileForm.handleSubmit((d) => profileMutation.mutate(d))}
+                  className="space-y-4"
+                >
+                  <Field label="Email address">
+                    <Input
+                      value={user?.email ?? ''}
+                      disabled
+                      className="bg-zinc-50 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500 cursor-not-allowed"
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Full name" error={profileForm.formState.errors.fullName?.message}>
+                      <Input id="fullName" {...profileForm.register('fullName')} placeholder="John Doe" />
+                    </Field>
+                    <Field label="Phone" hint="(optional)">
+                      <Input id="phone" {...profileForm.register('phone')} placeholder="+1 234 567 890" />
+                    </Field>
+                  </div>
+                  <Button type="submit" disabled={profileMutation.isPending}>
+                    {profileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save changes
+                  </Button>
+                </form>
               </div>
             </div>
+          )}
 
-            <form
-              onSubmit={profileForm.handleSubmit((d) => profileMutation.mutate(d))}
-              className="space-y-4"
-            >
-              <div className="space-y-1.5">
-                <Label>Email</Label>
-                <Input value={user?.email ?? ''} disabled className="bg-zinc-50 text-zinc-400" />
+          {/* ── Preferences ── */}
+          {active === 'preferences' && (
+            <div className="space-y-4">
+              <div>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100">App preferences</p>
+                <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-0.5">Customize how RiEliOS looks and formats data for you</p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" {...profileForm.register('fullName')} placeholder="John Doe" />
-                {profileForm.formState.errors.fullName && (
-                  <p className="text-xs text-destructive">{profileForm.formState.errors.fullName.message}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="phone">
-                  Phone <span className="text-zinc-400 text-xs">(optional)</span>
-                </Label>
-                <Input id="phone" {...profileForm.register('phone')} placeholder="+1 234 567 890" />
-              </div>
-              <Button type="submit" disabled={profileMutation.isPending}>
-                {profileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Profile
-              </Button>
-            </form>
-          </div>
-        </TabsContent>
+              <form
+                onSubmit={prefsForm.handleSubmit((d) => prefsMutation.mutate(d))}
+                className="space-y-5"
+              >
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Currency">
+                    <Controller
+                      name="currency"
+                      control={prefsForm.control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CURRENCIES.map((c) => (
+                              <SelectItem key={c.code} value={c.code}>
+                                {c.code} — {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </Field>
+                  <Field label="Timezone">
+                    <Controller
+                      name="timezone"
+                      control={prefsForm.control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TIMEZONES.map((tz) => (
+                              <SelectItem key={tz} value={tz}>
+                                {tz}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </Field>
+                </div>
 
-        {/* ── Preferences ── */}
-        <TabsContent value="preferences">
-          <div className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-6">
-            <div>
-              <p className="text-base font-bold text-zinc-800">Preferences</p>
-              <p className="text-sm text-zinc-400">Customize your app experience</p>
-            </div>
-            <form
-              onSubmit={prefsForm.handleSubmit((d) => prefsMutation.mutate(d))}
-              className="space-y-5"
-            >
-              <div className="space-y-1.5">
-                <Label>Currency</Label>
-                <Controller
-                  name="currency"
-                  control={prefsForm.control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CURRENCIES.map((c) => (
-                          <SelectItem key={c.code} value={c.code}>
-                            {c.code} — {c.name}
-                          </SelectItem>
+                <Separator />
+
+                <Field label="Theme">
+                  <Controller
+                    name="theme"
+                    control={prefsForm.control}
+                    render={({ field }) => (
+                      <div className="grid grid-cols-3 gap-2 max-w-xs">
+                        {(
+                          [
+                            { value: 'light', Icon: Sun, label: 'Light' },
+                            { value: 'dark', Icon: Moon, label: 'Dark' },
+                            { value: 'system', Icon: Monitor, label: 'System' },
+                          ] as const
+                        ).map(({ value, Icon, label }) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => field.onChange(value)}
+                            className={cn(
+                              'flex flex-col items-center gap-2 p-3 rounded-xl border-2 text-sm font-medium transition-all',
+                              field.value === value
+                                ? 'border-primary bg-primary/5 text-primary'
+                                : 'border-zinc-200 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-700',
+                            )}
+                          >
+                            <Icon className="h-5 w-5" />
+                            {label}
+                          </button>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+                      </div>
+                    )}
+                  />
+                </Field>
 
-              <div className="space-y-1.5">
-                <Label>Timezone</Label>
-                <Controller
-                  name="timezone"
-                  control={prefsForm.control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIMEZONES.map((tz) => (
-                          <SelectItem key={tz} value={tz}>
-                            {tz}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Theme</Label>
-                <Controller
-                  name="theme"
-                  control={prefsForm.control}
-                  render={({ field }) => (
-                    <div className="inline-flex rounded-xl border border-zinc-200 p-1 gap-1">
-                      {(
-                        [
-                          { value: 'light', Icon: Sun, label: 'Light' },
-                          { value: 'dark', Icon: Moon, label: 'Dark' },
-                          { value: 'system', Icon: Monitor, label: 'System' },
-                        ] as const
-                      ).map(({ value, Icon, label }) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => field.onChange(value)}
-                          className={cn(
-                            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                            field.value === value
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-zinc-500 hover:bg-zinc-100',
-                          )}
-                        >
-                          <Icon className="h-3.5 w-3.5" />
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                />
-              </div>
-
-              <Button type="submit" disabled={prefsMutation.isPending}>
-                {prefsMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Preferences
-              </Button>
-            </form>
-          </div>
-        </TabsContent>
-
-        {/* ── Security ── */}
-        <TabsContent value="security">
-          <div className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-6">
-            <div>
-              <p className="text-base font-bold text-zinc-800">Security</p>
-              <p className="text-sm text-zinc-400">Update your password</p>
+                <Button type="submit" disabled={prefsMutation.isPending}>
+                  {prefsMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save preferences
+                </Button>
+              </form>
             </div>
-            <form
-              onSubmit={passwordForm.handleSubmit((d) => passwordMutation.mutate(d))}
-              className="space-y-4"
-            >
-              <div className="space-y-1.5">
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  {...passwordForm.register('currentPassword')}
-                />
-                {passwordForm.formState.errors.currentPassword && (
-                  <p className="text-xs text-destructive">
-                    {passwordForm.formState.errors.currentPassword.message}
-                  </p>
-                )}
+          )}
+
+          {/* ── Security ── */}
+          {active === 'security' && (
+            <div className="space-y-4">
+              <div>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100">Change password</p>
+                <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-0.5">Use a strong password with at least 8 characters</p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="newPassword">New Password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  {...passwordForm.register('newPassword')}
-                />
-                {passwordForm.formState.errors.newPassword && (
-                  <p className="text-xs text-destructive">
-                    {passwordForm.formState.errors.newPassword.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  {...passwordForm.register('confirmPassword')}
-                />
-                {passwordForm.formState.errors.confirmPassword && (
-                  <p className="text-xs text-destructive">
-                    {passwordForm.formState.errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
-              <Button type="submit" disabled={passwordMutation.isPending}>
-                {passwordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Change Password
-              </Button>
-            </form>
-          </div>
-        </TabsContent>
-      </Tabs>
+              <form
+                onSubmit={passwordForm.handleSubmit((d) => passwordMutation.mutate(d))}
+                className="space-y-4"
+              >
+                <Field
+                  label="Current password"
+                  error={passwordForm.formState.errors.currentPassword?.message}
+                >
+                  <Input id="currentPassword" type="password" {...passwordForm.register('currentPassword')} />
+                </Field>
+
+                <Separator />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="New password" error={passwordForm.formState.errors.newPassword?.message}>
+                    <Input id="newPassword" type="password" {...passwordForm.register('newPassword')} />
+                  </Field>
+                  <Field label="Confirm new password" error={passwordForm.formState.errors.confirmPassword?.message}>
+                    <Input id="confirmPassword" type="password" {...passwordForm.register('confirmPassword')} />
+                  </Field>
+                </div>
+
+                <Button type="submit" disabled={passwordMutation.isPending}>
+                  {passwordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Update password
+                </Button>
+              </form>
+            </div>
+          )}
+
+        </div>
+      </div>
+      </div>
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, ShoppingCart, MoreVertical, AlertTriangle, Info, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, ShoppingCart, MoreVertical, AlertTriangle, Info } from 'lucide-react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -74,8 +74,6 @@ export default function ExpensesTab() {
   const watchedCategoryId = useWatch({ control, name: 'categoryId' })
   const watchedAmount = useWatch({ control, name: 'amount' })
   const watchedDate = useWatch({ control, name: 'spentDate' })
-
-  const [search, setSearch] = useState('')
 
   const createMutation = useMutation({
     mutationFn: (data: FormData) =>
@@ -156,14 +154,7 @@ export default function ExpensesTab() {
 
   const filtered = [...expenseList]
     .sort((a, b) => b.spentDate.localeCompare(a.spentDate))
-    .filter((item) => {
-      if (!item.spentDate.startsWith(monthStr())) return false
-      if (!search) return true
-      return (
-        (item.description ?? '').toLowerCase().includes(search.toLowerCase()) ||
-        (item.categoryId ? getCategoryName(item.categoryId).toLowerCase().includes(search.toLowerCase()) : false)
-      )
-    })
+    .filter((item) => item.spentDate.startsWith(monthStr()))
 
   return (
     <div className="space-y-4">
@@ -171,20 +162,9 @@ export default function ExpensesTab() {
         <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add Expense</Button>
       </div>
 
-      {expenseList.length > 0 && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-          <Input
-            placeholder="Search by description or category…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      )}
 
       {isLoading ? (
-        <div className="flex justify-center py-12 text-zinc-400 text-sm">Loading…</div>
+        <div className="flex justify-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">Loading…</div>
       ) : expenseList.length === 0 ? (
         <EmptyState
           icon={ShoppingCart}
@@ -192,20 +172,20 @@ export default function ExpensesTab() {
           description="Start logging your expenses to track where your money goes."
         />
       ) : filtered.length === 0 ? (
-        <div className="flex justify-center py-12 text-zinc-400 text-sm">
-          {search ? `No results for "${search}"` : 'No expenses for this month.'}
+        <div className="flex justify-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">
+          {'No expenses for this month.'}
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map((item) => (
-            <div key={item.id} className="bg-white rounded-2xl border border-zinc-200 flex items-center justify-between px-4 py-3">
+            <div key={item.id} className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 shrink-0">
-                  <ShoppingCart className="h-4 w-4 text-red-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/40 shrink-0">
+                  <ShoppingCart className="h-4 w-4 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm text-zinc-800">{item.description || 'Expense'}</p>
-                  <p className="text-xs text-zinc-400">
+                  <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">{item.description || 'Expense'}</p>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
                     {fmtDate(item.spentDate)}
                     {item.categoryId && ` · ${getCategoryName(item.categoryId)}`}
                   </p>
@@ -320,12 +300,12 @@ export default function ExpensesTab() {
               <div className={cn(
                 'rounded-xl border px-3 py-2.5 flex items-start gap-2.5 text-xs',
                 activeBudgetHint.projectedRemaining < 0
-                  ? 'bg-red-50 border-red-200'
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40'
                   : activeBudgetHint.remaining <= 0
-                  ? 'bg-red-50 border-red-200'
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40'
                   : activeBudgetHint.projectedRemaining < activeBudgetHint.planned * 0.1
-                  ? 'bg-amber-50 border-amber-200'
-                  : 'bg-blue-50 border-blue-200',
+                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40'
+                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/40',
               )}>
                 {activeBudgetHint.remaining <= 0 || activeBudgetHint.projectedRemaining < 0 ? (
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-red-500" />
@@ -334,25 +314,25 @@ export default function ExpensesTab() {
                 )}
                 <div className="space-y-0.5">
                   {activeBudgetHint.remaining <= 0 ? (
-                    <p className="font-semibold text-red-700">
+                    <p className="font-semibold text-red-700 dark:text-red-400">
                       Already {fmt((Math.abs(activeBudgetHint.remaining)).toFixed(2))} over budget for this category
                     </p>
                   ) : activeBudgetHint.projectedRemaining < 0 ? (
-                    <p className="font-semibold text-red-700">
+                    <p className="font-semibold text-red-700 dark:text-red-400">
                       This expense will put you {fmt(Math.abs(activeBudgetHint.projectedRemaining).toFixed(2))} over budget
                     </p>
                   ) : activeBudgetHint.projectedRemaining < activeBudgetHint.planned * 0.1 ? (
-                    <p className="font-semibold text-amber-700">
+                    <p className="font-semibold text-amber-700 dark:text-amber-400">
                       Only {fmt(activeBudgetHint.projectedRemaining.toFixed(2))} left after this expense
                     </p>
                   ) : (
-                    <p className="font-medium text-blue-700">
+                    <p className="font-medium text-blue-700 dark:text-blue-400">
                       {fmt(activeBudgetHint.projectedRemaining.toFixed(2))} remaining after this expense
                     </p>
                   )}
                   <p className={cn(
-                    activeBudgetHint.remaining <= 0 || activeBudgetHint.projectedRemaining < 0 ? 'text-red-500' :
-                    activeBudgetHint.projectedRemaining < activeBudgetHint.planned * 0.1 ? 'text-amber-500' : 'text-blue-400'
+                    activeBudgetHint.remaining <= 0 || activeBudgetHint.projectedRemaining < 0 ? 'text-red-500 dark:text-red-400' :
+                    activeBudgetHint.projectedRemaining < activeBudgetHint.planned * 0.1 ? 'text-amber-500 dark:text-amber-400' : 'text-blue-400 dark:text-blue-300'
                   )}>
                     {fmt(activeBudgetHint.spent.toFixed(2))} of {fmt(activeBudgetHint.planned.toFixed(2))} budget used this month
                   </p>

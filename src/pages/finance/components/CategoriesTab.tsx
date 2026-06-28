@@ -25,10 +25,10 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 const TYPE_COLORS: Record<CategoryType, string> = {
-  income: 'bg-green-100 text-green-700',
-  expense: 'bg-red-100 text-red-700',
-  saving: 'bg-blue-100 text-blue-700',
-  investment: 'bg-purple-100 text-purple-700',
+  income: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
+  expense: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',
+  saving: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
+  investment: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400',
 }
 
 export default function CategoriesTab() {
@@ -111,7 +111,7 @@ export default function CategoriesTab() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((cat) => (
-            <div key={cat.id} className="bg-white rounded-2xl border border-zinc-200 flex items-center justify-between px-4 py-3">
+            <div key={cat.id} className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-xl shrink-0"
@@ -120,7 +120,7 @@ export default function CategoriesTab() {
                   <Tag className="h-4 w-4 text-white opacity-90" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm text-zinc-800">{cat.name}</p>
+                  <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">{cat.name}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_COLORS[cat.type]}`}>
                     {cat.type}
                   </span>

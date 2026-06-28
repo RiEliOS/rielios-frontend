@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, TrendingUp, MoreVertical, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, MoreVertical } from 'lucide-react'
+import financeIcon from '@/assets/finance.png'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -38,7 +39,6 @@ export default function IncomeTab() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Income | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
 
   const { data: incomeList = [], isLoading } = useQuery({
     queryKey: ['income'],
@@ -107,14 +107,7 @@ export default function IncomeTab() {
 
   const filtered = [...incomeList]
     .sort((a, b) => b.receivedDate.localeCompare(a.receivedDate))
-    .filter((item) => {
-      if (!item.receivedDate.startsWith(monthStr())) return false
-      if (!search) return true
-      return (
-        item.sourceName.toLowerCase().includes(search.toLowerCase()) ||
-        (item.categoryId ? getCategoryName(item.categoryId).toLowerCase().includes(search.toLowerCase()) : false)
-      )
-    })
+    .filter((item) => item.receivedDate.startsWith(monthStr()))
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -124,41 +117,30 @@ export default function IncomeTab() {
         <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add Income</Button>
       </div>
 
-      {incomeList.length > 0 && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-          <Input
-            placeholder="Search by source or category…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      )}
 
       {isLoading ? (
-        <div className="flex justify-center py-12 text-zinc-400 text-sm">Loading…</div>
+        <div className="flex justify-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">Loading…</div>
       ) : incomeList.length === 0 ? (
         <EmptyState
-          icon={TrendingUp}
+          icon={financeIcon}
           title="No income yet"
           description="Add your first income source to start tracking."
         />
       ) : filtered.length === 0 ? (
-        <div className="flex justify-center py-12 text-zinc-400 text-sm">
-          {search ? `No results for "${search}"` : 'No income entries for this month.'}
+        <div className="flex justify-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">
+          {'No income entries for this month.'}
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map((item) => (
-            <div key={item.id} className="bg-white rounded-2xl border border-zinc-200 flex items-center justify-between px-4 py-3">
+            <div key={item.id} className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-100 shrink-0">
-                  <TrendingUp className="h-4 w-4 text-green-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/40 shrink-0">
+                  <img src={financeIcon} alt="" className="h-5 w-5 object-contain mix-blend-multiply dark:mix-blend-normal" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm text-zinc-800">{item.sourceName}</p>
-                  <p className="text-xs text-zinc-400">
+                  <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">{item.sourceName}</p>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
                     {fmtDate(item.receivedDate)}
                     {item.categoryId && ` · ${getCategoryName(item.categoryId)}`}
                   </p>

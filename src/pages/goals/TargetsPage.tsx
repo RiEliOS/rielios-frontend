@@ -4,6 +4,9 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, Pencil, Trash2, Target, PiggyBank, BarChart3, MapPin, MoreVertical } from 'lucide-react'
+import targetsIcon from '@/assets/targets.png'
+import savingsIcon from '@/assets/savings.png'
+import investmentIcon from '@/assets/investment.png'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -72,16 +75,16 @@ type CreateForm = z.infer<typeof createSchema>
 type EditForm = z.infer<typeof editSchema>
 
 const PRIORITY_COLORS: Record<string, string> = {
-  low: 'bg-blue-100 text-blue-700',
-  medium: 'bg-yellow-100 text-yellow-700',
-  high: 'bg-red-100 text-red-700',
+  low: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
+  medium: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400',
+  high: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-100 text-green-700',
-  completed: 'bg-emerald-100 text-emerald-700',
-  paused: 'bg-gray-100 text-gray-700',
-  cancelled: 'bg-red-100 text-red-500',
+  active: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
+  completed: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400',
+  paused: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  cancelled: 'bg-red-100 dark:bg-red-900/40 text-red-500 dark:text-red-400',
 }
 
 export default function GoalsPage() {
@@ -185,8 +188,8 @@ export default function GoalsPage() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-900">Targets</h1>
-          <p className="text-sm text-zinc-500 mt-1">Track your milestones and achievements</p>
+          <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">Targets</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Track your milestones and achievements</p>
         </div>
         <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />New Target</Button>
       </div>
@@ -194,12 +197,12 @@ export default function GoalsPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-zinc-200 h-32 animate-pulse" />
+            <div key={i} className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 h-32 animate-pulse" />
           ))}
         </div>
       ) : goals.length === 0 ? (
         <EmptyState
-          icon={Target}
+          icon={targetsIcon}
           title="No targets yet"
           description="Create your first target to start tracking your milestones."
         />
@@ -215,7 +218,7 @@ export default function GoalsPage() {
             const savingsProgress = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : null
 
             return (
-              <div key={goal.id} className="bg-white rounded-2xl border border-zinc-200 p-4 space-y-3">
+              <div key={goal.id} className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${PRIORITY_COLORS[goal.priority] ?? 'bg-gray-100 text-gray-700'}`}>
                     {goal.priority}
@@ -223,7 +226,7 @@ export default function GoalsPage() {
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLORS[goal.status] ?? 'bg-gray-100 text-gray-700'}`}>
                     {goal.status}
                   </span>
-                  <p className="font-semibold text-sm text-zinc-800 flex-1 min-w-0 truncate">{goal.title}</p>
+                  <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-200 flex-1 min-w-0 truncate">{goal.title}</p>
                   <DropdownMenuPrimitive.Root>
                     <DropdownMenuPrimitive.Trigger asChild>
                       <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
@@ -256,10 +259,10 @@ export default function GoalsPage() {
                   </DropdownMenuPrimitive.Root>
                 </div>
                 {goal.description && (
-                  <p className="text-sm text-zinc-500">{goal.description}</p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{goal.description}</p>
                 )}
                 {lifeArea && (
-                  <p className="text-xs text-zinc-400 flex items-center gap-1">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
                     {lifeArea.name}
                   </p>
@@ -267,16 +270,16 @@ export default function GoalsPage() {
                 {savingsProgress !== null && (
                   <div>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-zinc-500">Savings progress</span>
-                      <span className="font-medium text-zinc-700">{Math.round(savingsProgress)}%</span>
+                      <span className="text-zinc-500 dark:text-zinc-400">Savings progress</span>
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300">{Math.round(savingsProgress)}%</span>
                     </div>
                     <Progress value={savingsProgress} className="h-2" />
                   </div>
                 )}
                 {linkedSavings.length > 0 && (
-                  <div className="rounded-xl bg-zinc-50 border border-zinc-100 px-3 py-2 space-y-1.5">
-                    <p className="text-xs font-medium text-zinc-500 flex items-center gap-1">
-                      <PiggyBank className="h-3 w-3" />
+                  <div className="rounded-xl bg-zinc-50 dark:bg-zinc-700/50 border border-zinc-100 dark:border-zinc-700 px-3 py-2 space-y-1.5">
+                    <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                      <img src={savingsIcon} alt="" className="h-3.5 w-3.5 object-contain mix-blend-multiply dark:mix-blend-normal" />
                       Savings ({linkedSavings.length})
                     </p>
                     {linkedSavings.map((s) => {
@@ -287,24 +290,24 @@ export default function GoalsPage() {
                       return (
                         <div key={s.id}>
                           <div className="flex justify-between text-xs mb-0.5">
-                            <span className="text-zinc-700">{s.name}</span>
-                            <span className="text-zinc-500">{fmt(s.savedAmount)} / {fmt(s.targetAmount)}</span>
+                            <span className="text-zinc-700 dark:text-zinc-300">{s.name}</span>
+                            <span className="text-zinc-500 dark:text-zinc-400">{fmt(s.savedAmount)} / {fmt(s.targetAmount)}</span>
                           </div>
                           <Progress value={pct} className="h-1" />
                         </div>
                       )
                     })}
                     {totalTarget > 0 && (
-                      <p className="text-xs text-zinc-400 pt-0.5">
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500 pt-0.5">
                         Total: {fmt(totalSaved.toFixed(2))} of {fmt(totalTarget.toFixed(2))}
                       </p>
                     )}
                   </div>
                 )}
                 {linkedInvestments.length > 0 && (
-                  <div className="rounded-xl bg-zinc-50 border border-zinc-100 px-3 py-2 space-y-1.5">
-                    <p className="text-xs font-medium text-zinc-500 flex items-center gap-1">
-                      <BarChart3 className="h-3 w-3" />
+                  <div className="rounded-xl bg-zinc-50 dark:bg-zinc-700/50 border border-zinc-100 dark:border-zinc-700 px-3 py-2 space-y-1.5">
+                    <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                      <img src={investmentIcon} alt="" className="h-3.5 w-3.5 object-contain mix-blend-multiply dark:mix-blend-normal" />
                       Investments ({linkedInvestments.length})
                     </p>
                     {linkedInvestments.map((inv) => {
@@ -314,8 +317,8 @@ export default function GoalsPage() {
                       return (
                         <div key={inv.id}>
                           <div className="flex justify-between text-xs mb-0.5">
-                            <span className="text-zinc-700">{inv.name}</span>
-                            <span className="text-zinc-500">
+                            <span className="text-zinc-700 dark:text-zinc-300">{inv.name}</span>
+                            <span className="text-zinc-500 dark:text-zinc-400">
                               {fmt(spent)}
                               {budget > 0 && ` / ${fmt(budget)}`}
                             </span>
@@ -327,8 +330,8 @@ export default function GoalsPage() {
                   </div>
                 )}
                 {goal.targetDate && (
-                  <p className="text-xs text-zinc-400">
-                    Target: {fmtDate(goal.targetDate)}
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                    Deadline: {fmtDate(goal.targetDate)}
                   </p>
                 )}
               </div>
@@ -382,21 +385,21 @@ export default function GoalsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Target Date <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Label>Deadline <span className="text-muted-foreground text-xs">(optional)</span></Label>
                 <Input type="date" {...register('targetDate')} />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label>Life Area <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Label>Life Aspect <span className="text-muted-foreground text-xs">(optional)</span></Label>
               <Controller
                 name="lifeAreaId"
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value ?? 'none'} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue placeholder="No life area" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="No life aspect" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No life area</SelectItem>
+                      <SelectItem value="none">No life aspect</SelectItem>
                       {lifeAreas.map((la) => (
                         <SelectItem key={la.id} value={la.id}>{la.name}</SelectItem>
                       ))}
@@ -430,7 +433,7 @@ export default function GoalsPage() {
             <div className="flex gap-3 justify-end pt-2">
               <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? 'Saving…' : editing ? 'Save Changes' : 'Create Goal'}
+                {isPending ? 'Saving…' : editing ? 'Save Changes' : 'Create Target'}
               </Button>
             </div>
           </form>

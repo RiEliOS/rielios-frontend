@@ -9,7 +9,7 @@ const FEATURES = [
   'Unlimited savings goals',
   'Investment portfolio monitoring',
   'Personal goal tracking',
-  'Life area organisation',
+  'Life aspect organisation',
   'Financial reports & insights',
   'Secure account with JWT auth',
   'All future features included',

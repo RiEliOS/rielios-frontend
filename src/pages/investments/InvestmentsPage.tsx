@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, BarChart3, ListPlus, Target, MapPin, Eye, EyeOff, MoreVertical, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, ListPlus, Target, MapPin, Eye, EyeOff, MoreVertical, ArrowRight, CheckCircle2 } from 'lucide-react'
+import investmentIcon from '@/assets/investment.png'
+import targetsIcon from '@/assets/targets.png'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import * as TooltipPrimitive from '@radix-ui/react-tooltip'
 import { toast } from 'sonner'
@@ -80,10 +82,10 @@ const entrySchema = z.object({
 type EntryForm = z.infer<typeof entrySchema>
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-blue-100 text-blue-700',
-  completed: 'bg-green-100 text-green-700',
-  paused: 'bg-gray-100 text-gray-700',
-  cancelled: 'bg-red-100 text-red-500',
+  active: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
+  completed: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
+  paused: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  cancelled: 'bg-red-100 dark:bg-red-900/40 text-red-500 dark:text-red-400',
 }
 
 const ENTRY_COLORS: Record<string, string> = {
@@ -98,10 +100,10 @@ function computeTimeStatus(inv: Investment): { label: string; cls: string } | nu
   const now = Date.now()
   const target = new Date(inv.targetDate).getTime()
   const diffDays = Math.round((target - now) / (1000 * 60 * 60 * 24))
-  if (diffDays < 0) return { label: `Overdue · ${Math.abs(diffDays)}d past target`, cls: 'bg-red-100 text-red-600' }
-  if (diffDays === 0) return { label: 'Due today', cls: 'bg-orange-100 text-orange-600' }
-  if (diffDays <= 7) return { label: `${diffDays}d left — urgent`, cls: 'bg-yellow-100 text-yellow-700' }
-  return { label: `${diffDays}d left`, cls: 'bg-green-100 text-green-700' }
+  if (diffDays < 0) return { label: `Overdue · ${Math.abs(diffDays)}d past target`, cls: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400' }
+  if (diffDays === 0) return { label: 'Due today', cls: 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' }
+  if (diffDays <= 7) return { label: `${diffDays}d left — urgent`, cls: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400' }
+  return { label: `${diffDays}d left`, cls: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400' }
 }
 
 function computeProgress(inv: Investment): number {
@@ -284,8 +286,8 @@ export default function InvestmentsPage() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-900">Investments</h1>
-          <p className="text-sm text-zinc-500 mt-1">Track and grow your investments</p>
+          <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">Investments</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Track and grow your investments</p>
         </div>
         <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />New Investment</Button>
       </div>
@@ -293,12 +295,12 @@ export default function InvestmentsPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-zinc-200 h-36 animate-pulse" />
+            <div key={i} className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 h-36 animate-pulse" />
           ))}
         </div>
       ) : investments.length === 0 ? (
         <EmptyState
-          icon={BarChart3}
+          icon={investmentIcon}
           title="No investments yet"
           description="Start tracking your investment portfolio and see your returns grow."
         />
@@ -313,12 +315,12 @@ export default function InvestmentsPage() {
             const linkedGoal = goals.find((g) => g.id === inv.personalGoalId)
             const lifeArea = lifeAreas.find((la) => la.id === inv.lifeAreaId)
             return (
-              <div key={inv.id} className="bg-white rounded-2xl border border-zinc-200 p-4 space-y-3">
+              <div key={inv.id} className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-700'}`}>
                     {inv.status}
                   </span>
-                  <p className="font-semibold text-sm text-zinc-800 flex-1 min-w-0 truncate">{inv.name}</p>
+                  <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-200 flex-1 min-w-0 truncate">{inv.name}</p>
                   <DropdownMenuPrimitive.Root>
                     <DropdownMenuPrimitive.Trigger asChild>
                       <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
@@ -366,16 +368,16 @@ export default function InvestmentsPage() {
                     </DropdownMenuPrimitive.Portal>
                   </DropdownMenuPrimitive.Root>
                 </div>
-                {inv.description && <p className="text-sm text-zinc-500">{inv.description}</p>}
+                {inv.description && <p className="text-sm text-zinc-500 dark:text-zinc-400">{inv.description}</p>}
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                   {linkedGoal && (
-                    <p className="text-xs text-zinc-400 flex items-center gap-1">
-                      <Target className="h-3 w-3" />
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
+                      <img src={targetsIcon} alt="" className="h-3.5 w-3.5 object-contain mix-blend-multiply dark:mix-blend-normal" />
                       {linkedGoal.title}
                     </p>
                   )}
                   {lifeArea && (
-                    <p className="text-xs text-zinc-400 flex items-center gap-1">
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
                       {lifeArea.name}
                     </p>
@@ -387,52 +389,52 @@ export default function InvestmentsPage() {
                   </span>
                 )}
                 <div className="flex items-center gap-2 text-sm">
-                  <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
-                    <p className="text-xs text-zinc-400">Budget</p>
-                    <p className="font-semibold tabular-nums text-zinc-700">{fmt(inv.plannedBudget)}</p>
+                  <div className="flex-1 rounded-xl bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 px-2.5 py-1.5">
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">Budget</p>
+                    <p className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">{fmt(inv.plannedBudget)}</p>
                   </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
-                  <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
-                    <p className="text-xs text-zinc-400">Contributed</p>
-                    <p className={`font-semibold tabular-nums ${isOverBudget ? 'text-red-500' : 'text-zinc-700'}`}>
+                  <ArrowRight className="h-3.5 w-3.5 text-zinc-300 dark:text-zinc-600 shrink-0" />
+                  <div className="flex-1 rounded-xl bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 px-2.5 py-1.5">
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">Contributed</p>
+                    <p className={`font-semibold tabular-nums ${isOverBudget ? 'text-red-500' : 'text-zinc-700 dark:text-zinc-300'}`}>
                       {fmt(inv.amountSpent)}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   {parseFloat(inv.amountExpenses) > 0 && (
-                    <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
-                      <p className="text-xs text-zinc-400">Expenses</p>
+                    <div className="flex-1 rounded-xl bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 px-2.5 py-1.5">
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500">Expenses</p>
                       <p className="font-semibold tabular-nums text-orange-500">{fmt(inv.amountExpenses)}</p>
                     </div>
                   )}
-                  <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
-                    <p className="text-xs text-zinc-400">Total Deployed</p>
-                    <p className={`font-semibold tabular-nums ${isOverBudget ? 'text-red-500' : 'text-zinc-700'}`}>
+                  <div className="flex-1 rounded-xl bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 px-2.5 py-1.5">
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">Total Deployed</p>
+                    <p className={`font-semibold tabular-nums ${isOverBudget ? 'text-red-500' : 'text-zinc-700 dark:text-zinc-300'}`}>
                       {fmt(totalOut.toFixed(2))}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
-                    <p className="text-xs text-zinc-400">Exp. Return</p>
-                    <p className="font-semibold tabular-nums text-zinc-400">{fmt(inv.expectedReturn)}</p>
+                  <div className="flex-1 rounded-xl bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 px-2.5 py-1.5">
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">Exp. Return</p>
+                    <p className="font-semibold tabular-nums text-zinc-400 dark:text-zinc-500">{fmt(inv.expectedReturn)}</p>
                   </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
-                  <div className="flex-1 rounded-xl bg-zinc-50 border border-zinc-100 px-2.5 py-1.5">
-                    <p className="text-xs text-zinc-400">Returned</p>
+                  <ArrowRight className="h-3.5 w-3.5 text-zinc-300 dark:text-zinc-600 shrink-0" />
+                  <div className="flex-1 rounded-xl bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-600 px-2.5 py-1.5">
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">Returned</p>
                     {inv.expectedReturn && parseFloat(inv.expectedReturn) > 0 ? (
                       (() => {
                         const ret = parseFloat(inv.amountReturned)
                         const exp = parseFloat(inv.expectedReturn)
                         return (
-                          <p className={`font-semibold tabular-nums ${ret > exp ? 'text-green-600' : ret < exp ? 'text-red-500' : 'text-zinc-700'}`}>
+                          <p className={`font-semibold tabular-nums ${ret > exp ? 'text-green-600' : ret < exp ? 'text-red-500' : 'text-zinc-700 dark:text-zinc-300'}`}>
                             {fmt(inv.amountReturned)}{ret > exp ? '+' : ret < exp ? '-' : ''}
                           </p>
                         )
                       })()
                     ) : (
-                      <p className={`font-semibold tabular-nums ${parseFloat(inv.amountReturned) > 0 ? 'text-green-600' : 'text-zinc-700'}`}>
+                      <p className={`font-semibold tabular-nums ${parseFloat(inv.amountReturned) > 0 ? 'text-green-600' : 'text-zinc-700 dark:text-zinc-300'}`}>
                         {fmt(inv.amountReturned)}
                       </p>
                     )}
@@ -440,10 +442,10 @@ export default function InvestmentsPage() {
                 </div>
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className={isOverBudget ? 'text-red-500 font-medium' : 'text-zinc-400'}>
+                    <span className={isOverBudget ? 'text-red-500 font-medium' : 'text-zinc-400 dark:text-zinc-500'}>
                       {isOverBudget ? 'Over budget' : hasBudget ? 'Budget used' : 'Progress'}
                     </span>
-                    <span className={isOverBudget ? 'text-red-500 font-medium' : 'text-zinc-500'}>
+                    <span className={isOverBudget ? 'text-red-500 font-medium' : 'text-zinc-500 dark:text-zinc-400'}>
                       {Math.round(progress)}%
                     </span>
                   </div>
@@ -481,32 +483,32 @@ export default function InvestmentsPage() {
             const isGain = pnl >= 0
             return (
               <div className="space-y-4 mt-2">
-                <p className="text-sm text-zinc-600">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   Closing <span className="font-semibold">{closeTarget.name}</span> will record the realized P&amp;L and mark it as completed.
                 </p>
-                <div className="rounded-xl bg-zinc-50 border border-zinc-200 p-4 space-y-2 text-sm">
+                <div className="rounded-xl bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 p-4 space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-zinc-500">Contributed</span>
+                    <span className="text-zinc-500 dark:text-zinc-400">Contributed</span>
                     <span className="font-medium tabular-nums text-blue-600">{fmt(closeTarget.amountSpent)}</span>
                   </div>
                   {expenses > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-zinc-500">Expenses (costs)</span>
+                      <span className="text-zinc-500 dark:text-zinc-400">Expenses (costs)</span>
                       <span className="font-medium tabular-nums text-orange-500">{fmt(closeTarget.amountExpenses)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-zinc-500">Returned</span>
+                    <span className="text-zinc-500 dark:text-zinc-400">Returned</span>
                     <span className="font-medium tabular-nums text-green-600">{fmt(closeTarget.amountReturned)}</span>
                   </div>
-                  <div className="flex justify-between border-t border-zinc-200 pt-2 mt-2">
-                    <span className="font-semibold text-zinc-700">Realized P&amp;L</span>
+                  <div className="flex justify-between border-t border-zinc-200 dark:border-zinc-600 pt-2 mt-2">
+                    <span className="font-semibold text-zinc-700 dark:text-zinc-300">Realized P&amp;L</span>
                     <span className={`font-bold tabular-nums ${isGain ? 'text-green-600' : 'text-red-500'}`}>
                       {isGain ? '+' : ''}{fmt(pnl.toFixed(2))}
                     </span>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-zinc-400 dark:text-zinc-500">
                   {isGain
                     ? 'This gain will be added to your Net Flow for this month.'
                     : 'This loss will be deducted from your Net Flow for this month.'}
@@ -589,7 +591,7 @@ export default function InvestmentsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Life Area <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Label>Life Aspect <span className="text-muted-foreground text-xs">(optional)</span></Label>
                 <Controller
                   name="lifeAreaId"
                   control={control}
