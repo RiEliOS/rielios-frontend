@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { LucideIcon } from 'lucide-react'
 import {
-  TrendingDown,
   ArrowRight, ArrowUp, ArrowDown, AlertTriangle, CheckCircle2, Plus,
 } from 'lucide-react'
 import financeIcon from '@/assets/finance.png'

@@ -120,8 +120,8 @@ function Field({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2">
-        <Label className="text-sm font-medium text-zinc-700">{label}</Label>
-        {hint && <span className="text-xs text-zinc-400">{hint}</span>}
+        <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{label}</Label>
+        {hint && <span className="text-xs text-zinc-400 dark:text-zinc-500">{hint}</span>}
       </div>
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
@@ -333,7 +333,7 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <div>
                   <p className="font-semibold text-zinc-900 dark:text-zinc-100">Personal information</p>
-                  <p className="text-sm text-zinc-400 mt-0.5">Update your name and contact details</p>
+                  <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-0.5">Update your name and contact details</p>
                 </div>
                 <form
                   onSubmit={profileForm.handleSubmit((d) => profileMutation.mutate(d))}
